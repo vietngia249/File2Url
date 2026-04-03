@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>File2Url - Secure File Sharing</title>
+  
+  <!-- Cài đặt Font chữ hiện đại -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+  
+  <!-- Icon Lucide -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+  <!-- Background Animated Blur -->
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+
+  <main class="app-container glass-panel">
+    
+    <header class="logo">
+      <i data-lucide="cloud-lightning"></i>
+      <h1>File2Url</h1>
+    </header>
+
+    <!-- SECTION 1: UPLOAD PAGE -->
+    <section id="view-upload" class="view section-active">
+      <p class="subtitle">Chia sẻ file ẩn danh. Tự huỷ không để lại dấu vết.</p>
+      
+      <!-- Box Kéo Viền Nứt Nét -->
+      <div id="dropzone" class="dropzone">
+        <input type="file" id="fileInput" hidden />
+        <i data-lucide="upload-cloud" class="icon-pulse"></i>
+        <p>Kéo thả file vào đây hoặc <span>Duyệt</span></p>
+        <span class="limit-text">Tối đa 100MB</span>
+      </div>
+
+      <!-- Vùng Setting Hiện ra sau khi chọn File -->
+      <div id="upload-panel" class="panel hidden">
+        <div class="file-info">
+          <i data-lucide="file" class="file-icon"></i>
+          <div class="file-details">
+            <span id="selected-filename">video.mp4</span>
+            <span id="selected-filesize">25 MB</span>
+          </div>
+          <button id="btn-remove-file" class="icon-btn" title="Gỡ file"><i data-lucide="x"></i></button>
+        </div>
+
+        <div class="settings">
+          <label class="setting-row">
+            <span>Thời gian tồn tại</span>
+            <select id="input-expire">
+              <option value="1">1 Ngày</option>
+              <option value="3">3 Ngày</option>
+              <option value="7">7 Ngày</option>
+              <option value="30">30 Ngày</option>
+              <option value="0" class="text-glow">Vĩnh viễn (0)</option>
+            </select>
+          </label>
+          <label class="setting-row">
+            <span>🔥 Xoá ngay sau khi xem/tải</span>
+            <div class="toggle-switch">
+              <input type="checkbox" id="input-burn" />
+              <span class="slider"></span>
+            </div>
+          </label>
+        </div>
+
+        <button id="btn-upload" class="btn-primary">
+          <i data-lucide="shield-check"></i> Upload Securely
+        </button>
+      </div>
+
+      <!-- Trạng thái Loading lúc đang Up lên R2 -->
+      <div id="loading-panel" class="panel hidden">
+        <div class="loader"></div>
+        <p>Đang mã hoá và tải lên R2...</p>
+      </div>
+
+      <!-- Upload Thành Công -->
+      <div id="success-panel" class="panel hidden">
+        <i data-lucide="check-circle-2" class="success-icon"></i>
+        <h3>Upload Thành Công!</h3>
+        
+        <div class="result-box">
+          <span class="label">Share Link:</span>
+          <div class="input-group">
+            <input type="text" id="result-url" readonly />
+            <button id="btn-copy-url" class="btn-secondary">Copy</button>
+          </div>
+        </div>
+
+        <div class="result-box">
+          <span class="label alert-label">Mã Quản Lý (Giấu đi):</span>
+          <div class="input-group">
+            <input type="text" id="result-key" readonly />
+            <button id="btn-copy-key" class="btn-secondary">Copy</button>
+          </div>
+        </div>
+
+        <p class="small-text text-glow">Hãy lưu mã này để tự tay xoá file sau này!</p>
+        <button id="btn-new-upload" class="btn-outline">Tải lên file mới</button>
+      </div>
+    </section>
+
+    <!-- SECTION 2: VIEW/DOWNLOAD PAGE (Lấy file) -->
+    <section id="view-download" class="view hidden">
+      <div id="dl-state-loading" class="state-box">
+        <div class="loader"></div><p>Bẻ khoá liên kết...</p>
+      </div>
+
+      <div id="dl-state-ready" class="state-box hidden">
+        <i data-lucide="file-check-2" class="big-icon neon-blue"></i>
+        <h2 id="dl-filename" class="text-truncate">filename.zip</h2>
+        <p id="dl-filesize" class="badge">--</p>
+        <p id="dl-expiry-text" class="expiry-warning"></p>
+        
+        <a id="btn-download" class="btn-primary" href="#" target="_blank">
+          <i data-lucide="download"></i> Download File
+        </a>
+        <button class="btn-home" onclick="window.location.href='/'">Tạo File2Url của riêng bạn</button>
+      </div>
+
+      <div id="dl-state-error" class="state-box error-box hidden">
+        <i data-lucide="file-x-2" class="big-icon neon-red"></i>
+        <h2>Link hỏng hoặc Hết hạn</h2>
+        <p>Tệp tin bạn tìm không tồn tại trên hệ thống hoặc đã bị xoá bởi người gửi.</p>
+        <button class="btn-home" onclick="window.location.href='/'">Quay về Trang chủ</button>
+      </div>
+    </section>
+
+    <!-- SECTION 3: MANAGE PAGE (Quản lý xoá file dựa vào secret key) -->
+    <section id="view-manage" class="view hidden">
+      <h2 class="neon-purple">Quản lý File Của Bạn</h2>
+      <p class="subtitle">Nhập mã quản lý (Secret Key) để thao tác</p>
+
+      <div class="input-group" style="margin-top:20px;">
+        <input type="text" id="input-manage-key" placeholder="Ví dụ: abc-123-..." />
+        <button id="btn-manage-search" class="btn-secondary">Tìm</button>
+      </div>
+
+      <div id="manage-result" class="manage-box hidden">
+        <!-- Chèn JS render thông tin sống vào đây -->
+      </div>
+    </section>
+
+  </main>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

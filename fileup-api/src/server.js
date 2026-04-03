@@ -20,6 +20,7 @@ import cors from '@fastify/cors';
 
 import uploadRoute from './routes/upload.js';
 import fileRoute from './routes/file.js';
+import manageRoute from './routes/manage.js';
 import { startCleanupJob } from './jobs/cleanup.js';
 import { pool } from './services/db.js';
 
@@ -59,7 +60,7 @@ const fastify = Fastify({
 // [FIX-8] CORS — explicit allowed origin only, no wildcard
 await fastify.register(cors, {
   origin: ALLOWED_ORIGIN,
-  methods: ['GET', 'POST', 'OPTIONS'],
+  methods: ['GET', 'POST', 'OPTIONS', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   // Credentials support if your frontend needs cookies/auth headers
   credentials: false,
@@ -100,6 +101,7 @@ await fastify.register(multipart, {
 // ---------------------------------------------------------------------------
 await fastify.register(uploadRoute);
 await fastify.register(fileRoute);
+await fastify.register(manageRoute);
 
 // Health check — useful for load balancers / uptime monitors
 fastify.get('/health', async () => ({

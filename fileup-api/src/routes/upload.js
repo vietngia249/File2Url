@@ -14,7 +14,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { query } from '../services/db.js';
 import { uploadFile } from '../services/storage.js';
 
-const VALID_EXPIRE_DAYS = [1, 3, 5, 7];
 const MAX_FILE_SIZE_BYTES = 100 * 1024 * 1024; // 100 MB
 
 // [FIX-7] Maximum filename length (bytes) stored in DB / sent to client
@@ -59,11 +58,11 @@ function sanitizeFilename(raw) {
  *
  * Accepts multipart/form-data:
  *   - file                (required)
- *   - expire              (optional: 1 | 3 | 5 | 7, default = 1)
+ *   - expire              (optional: any positive integer. 0 = never expire, default = 1)
  *   - delete_after_expiry (optional: "true" | "false", default = false)
  *
  * Returns:
- *   { url, expires_at, delete_after_expiry }
+ *   { url, expires_at, delete_after_expiry, management_key }
  */
 export default async function uploadRoute(fastify) {
   fastify.post('/upload', {
@@ -78,7 +77,7 @@ export default async function uploadRoute(fastify) {
 
     let fileStream = null;
     let fileMeta = null;     // { filename, mimetype, size }
-    let expireDays = 1;
+    let expireDays = 1;      // Default to 1 day
     let deleteAfterExpiry = false;
     let sizeBytes = 0;
 
@@ -136,7 +135,10 @@ export default async function uploadRoute(fastify) {
         }
       } else if (part.type === 'field') {
         if (part.fieldname === 'expire') {
-          expireDays = parseInt(part.value, 10);
+          const parsedDays = parseInt(part.value, 10);
+          if (!isNaN(parsedDays)) {
+            expireDays = parsedDays;
+          }
         } else if (part.fieldname === 'delete_after_expiry') {
           deleteAfterExpiry = part.value === 'true' || part.value === '1';
         }
@@ -150,18 +152,21 @@ export default async function uploadRoute(fastify) {
       return reply.code(400).send({ error: 'Missing required field: file' });
     }
 
-    if (!VALID_EXPIRE_DAYS.includes(expireDays)) {
-      return reply.code(400).send({
-        error: `Invalid expire value. Must be one of: ${VALID_EXPIRE_DAYS.join(', ')}`,
-      });
+    if (expireDays < 0) {
+      return reply.code(400).send({ error: `Invalid expire value. Must be 0 or a positive number.` });
     }
 
     // -------------------------------------------------------
     // Upload to R2 (TRUE STREAMING — no Buffer.concat)
     // -------------------------------------------------------
     const fileId = uuidv4();
+    const managementKey = uuidv4(); // Generate Secret Key for Management
     const storageKey = `files/${fileId}`;
-    const expiresAt = new Date(Date.now() + expireDays * 24 * 60 * 60 * 1000);
+    
+    // Nếu expireDays = 0, gán expiresAt là null (không bao giờ hết hạn)
+    const expiresAt = expireDays > 0 
+        ? new Date(Date.now() + expireDays * 24 * 60 * 60 * 1000) 
+        : null;
 
     try {
       // [FIX-1] Pass the live counting stream directly.
@@ -181,8 +186,8 @@ export default async function uploadRoute(fastify) {
     // -------------------------------------------------------
     try {
       await query(
-        `INSERT INTO files (id, storage_key, original_filename, content_type, size_bytes, expires_at, delete_after_expiry)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        `INSERT INTO files (id, storage_key, original_filename, content_type, size_bytes, expires_at, delete_after_expiry, management_key)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
         [
           fileId,
           storageKey,
@@ -191,6 +196,7 @@ export default async function uploadRoute(fastify) {
           sizeBytes,
           expiresAt,
           deleteAfterExpiry,
+          managementKey
         ]
       );
     } catch (err) {
@@ -212,8 +218,10 @@ export default async function uploadRoute(fastify) {
 
     return reply.code(201).send({
       url: `${baseUrl}/file/${fileId}`,
-      expires_at: expiresAt.toISOString(),
+      expires_at: expiresAt ? expiresAt.toISOString() : null,
       delete_after_expiry: deleteAfterExpiry,
+      management_key: managementKey
     });
   });
 }
+

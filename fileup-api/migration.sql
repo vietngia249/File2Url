@@ -11,13 +11,15 @@ CREATE TABLE IF NOT EXISTS files (
   original_filename   TEXT,
   content_type        TEXT,
   size_bytes          BIGINT,
-  expires_at          TIMESTAMP   NOT NULL,
+  expires_at          TIMESTAMP,  -- NO LONGER NOT NULL (to allow expire=0)
   delete_after_expiry BOOLEAN     NOT NULL DEFAULT false,
+  management_key      VARCHAR(64), -- Added for user management mapping
   created_at          TIMESTAMP   NOT NULL DEFAULT now()
 );
 
 -- Speeds up cleanup job queries
 CREATE INDEX IF NOT EXISTS idx_expires_at ON files(expires_at);
+CREATE INDEX IF NOT EXISTS idx_management_key ON files(management_key);
 
 -- =============================================================
 -- To run:
