@@ -166,14 +166,29 @@ btnUpload.addEventListener('click', async () => {
   }
 });
 
-// Copy logic
-const copyToClip = (input, btn) => {
-  input.select();
-  document.execCommand('copy');
-  const tempHtml = btn.innerHTML;
+// Copy logic (Clipboard API hiện đại + Chống kẹt nút dập)
+const copyToClip = async (input, btn) => {
+  const originalText = btn.innerHTML;
+  
+  try {
+    // Ưu tiên API mới
+    await navigator.clipboard.writeText(input.value);
+  } catch (err) {
+    // Fallback nếu HTTPS / API bị chặn
+    input.select();
+    document.execCommand('copy');
+  }
+
+  // Tạm khóa nút chống Spam click
+  btn.style.pointerEvents = 'none';
   btn.innerHTML = `<span class="material-symbols-outlined text-sm">check</span> Copied!`;
-  setTimeout(() => btn.innerHTML = tempHtml, 2000);
+  
+  setTimeout(() => {
+    btn.innerHTML = originalText;
+    btn.style.pointerEvents = 'auto';
+  }, 2000);
 }
+
 btnCopyUrl.addEventListener('click', () => copyToClip(elResultUrl, btnCopyUrl));
 btnCopyKey.addEventListener('click', () => copyToClip(elResultKey, btnCopyKey));
 
