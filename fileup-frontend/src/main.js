@@ -153,10 +153,8 @@ btnUpload.addEventListener('click', async () => {
     // Animate pop
     setTimeout(()=> elSuccessPanel.classList.remove('opacity-0'), 10);
 
-    // Xử lý URL
-    const encodedName = encodeURIComponent(currentFile.name);
-    const viewUrl = window.location.origin + '/?dl=' + data.url.split('/').pop() + `&n=${encodedName}&s=${currentFile.size}&t=${currentFile.type.split('/')[0]}`;
-    elResultUrl.value = viewUrl;
+    // Xử lý URL - Trả về thẳng link gốc của API theo lệnh
+    elResultUrl.value = data.url;
     elResultKey.value = data.management_key || 'No Key Generated';
 
   } catch (err) {
@@ -293,7 +291,7 @@ function handleManageMode() {
             <span class="text-xs text-slate-500 font-label uppercase tracking-widest">${formatBytes(data.size_bytes)}</span>
           </div>
         </div>
-        <div class="grid grid-cols-2 gap-4 mt-2">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
           <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
             <p class="text-[10px] font-label uppercase tracking-widest text-slate-400 mb-1">Trạng Thái</p>
             <p class="text-sm font-bold ${data.is_expired ? 'text-rose-500' : 'text-emerald-500'}">

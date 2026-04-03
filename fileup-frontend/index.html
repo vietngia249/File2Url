@@ -18,18 +18,14 @@
   <!-- TopNavBar Component -->
   <nav class="fixed top-0 w-full z-50 h-16 bg-white/70 backdrop-blur-xl border-b border-white/40 shadow-[0px_24px_48px_rgba(44,47,49,0.06)]">
     <div class="flex justify-between items-center px-6 md:px-12 max-w-screen-2xl mx-auto h-full">
-      <div class="flex items-center gap-8">
-        <span class="text-2xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-[#00D4FF] to-[#6a1cf6] font-['Space_Grotesk'] cursor-pointer transition-transform hover:scale-105" onclick="window.location.href='/'">File2Url</span>
-        <div class="hidden md:flex gap-6 font-['Space_Grotesk'] text-sm tracking-tight">
-          <a id="nav-upload" class="text-[#6a1cf6] font-bold border-b-2 border-[#6a1cf6] pb-1 transition-all" href="#">Upload</a>
-          <a id="nav-manage" class="text-slate-600 font-medium hover:text-[#00D4FF] transition-colors" href="#manage">Manage File</a>
-        </div>
+      <div class="flex items-center">
+        <span class="text-xl sm:text-2xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-[#00D4FF] to-[#6a1cf6] font-['Space_Grotesk'] cursor-pointer transition-transform hover:scale-105" onclick="window.location.href='/'">File2Url</span>
       </div>
-      <div class="flex items-center gap-4">
-        <button class="p-2 hover:bg-slate-100/50 rounded-lg transition-all active:scale-95 duration-200">
-          <span class="material-symbols-outlined text-slate-600">account_circle</span>
-        </button>
+      <div class="flex gap-4 sm:gap-6 font-['Space_Grotesk'] text-sm tracking-tight items-center">
+        <a id="nav-upload" class="text-[#6a1cf6] font-bold border-b-2 border-[#6a1cf6] pb-1 transition-all" href="#">Upload</a>
+        <a id="nav-manage" class="text-slate-600 font-medium hover:text-[#00D4FF] transition-colors" href="#manage">Manage</a>
       </div>
+      <!-- Account slot empty for anonymous UI -->
     </div>
   </nav>
 
@@ -47,16 +43,16 @@
         <!-- Control Panel (Trái) -->
         <div class="lg:col-span-7 flex flex-col gap-6 w-full">
           <!-- Dropzone -->
-          <div id="dropzone" class="glass-panel border-2 border-dashed border-slate-200 hover:border-primary transition-all duration-300 rounded-xl p-12 flex flex-col items-center justify-center text-center cursor-pointer group hover:shadow-[0_20px_50px_rgba(0,212,255,0.1)] relative overflow-hidden">
+          <div id="dropzone" class="w-full glass-panel border-2 border-dashed border-slate-200 hover:border-primary transition-all duration-300 rounded-xl p-6 sm:p-12 flex flex-col items-center justify-center text-center cursor-pointer group hover:shadow-[0_20px_50px_rgba(0,212,255,0.1)] relative overflow-hidden">
             <input type="file" id="fileInput" hidden />
             <div class="scanning-line"></div>
             <div class="bg-white p-6 rounded-2xl mb-6 shadow-sm ring-1 ring-slate-100 transition-transform duration-300 group-hover:scale-110">
               <span class="material-symbols-outlined text-5xl text-primary" id="icon-upload-state">cloud_upload</span>
             </div>
-            <h2 id="dropzone-text" class="font-headline text-2xl font-bold tracking-tight mb-2 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+            <h2 id="dropzone-text" class="font-headline text-xl sm:text-2xl pt-2 font-bold tracking-tight mb-2 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent px-4">
               Kéo thả file vào đây hoặc Click để duyệt
             </h2>
-            <p id="dropzone-subtext" class="text-on-surface-variant font-label text-xs uppercase tracking-widest max-w-md">
+            <p id="dropzone-subtext" class="text-on-surface-variant font-label text-[10px] sm:text-xs px-2 uppercase tracking-[0.1em] sm:tracking-widest max-w-sm sm:max-w-md">
               Hỗ trợ 100MB cho khách ngoài hệ thống.
             </p>
             <!-- Design Brackets -->
@@ -91,7 +87,7 @@
                   <div class="w-8 h-8 rounded bg-primary/10 flex items-center justify-center">
                     <span class="material-symbols-outlined text-primary text-sm">description</span>
                   </div>
-                  <div class="flex flex-col truncate w-32">
+                  <div class="flex flex-col truncate flex-1 min-w-0 pr-4">
                     <span id="selected-filename" class="text-sm font-semibold text-slate-700 truncate">demo.zip</span>
                     <span id="selected-filesize" class="text-[10px] text-slate-400 font-bold">-- MB</span>
                   </div>
@@ -146,7 +142,7 @@
     <!-- MODAL 1: SUCCESS UPLOAD -->
     <!-- ============================================== -->
     <div id="success-modal" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md hidden opacity-0 transition-opacity duration-300">
-      <div class="glass-card max-w-lg w-full p-8 rounded-3xl border border-white shadow-2xl flex flex-col items-center text-center transform scale-95 transition-transform duration-300" id="success-modal-box">
+      <div class="glass-card max-w-lg w-full p-6 sm:p-8 rounded-3xl border border-white shadow-2xl flex flex-col items-center text-center transform scale-95 transition-transform duration-300" id="success-modal-box">
         <div class="w-20 h-20 rounded-full bg-emerald-50 flex items-center justify-center mb-4 ring-8 ring-emerald-500/5">
           <span class="material-symbols-outlined text-5xl text-emerald-500">check_circle</span>
         </div>
@@ -156,24 +152,24 @@
         <!-- Result URL -->
         <div class="w-full text-left mb-2 text-xs font-semibold text-slate-500 uppercase">Share Link Public</div>
         <div class="w-full flex items-center bg-slate-50 rounded-xl overflow-hidden border border-slate-200 focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/10 transition-all mb-4">
-          <input id="result-url" class="bg-transparent border-none focus:ring-0 text-secondary font-bold text-sm px-4 py-3 flex-grow font-mono" readonly type="text" />
-          <button id="btn-copy-url" class="bg-white hover:bg-slate-100 text-secondary px-4 py-3 text-xs font-black uppercase transition-colors border-l border-slate-200 flex items-center gap-2">
-            <span class="material-symbols-outlined text-sm">content_copy</span> Ghi chép
+          <input id="result-url" class="bg-transparent border-none focus:ring-0 text-secondary font-bold text-xs sm:text-sm pl-4 pr-2 py-3 flex-grow font-mono min-w-0" readonly type="text" />
+          <button id="btn-copy-url" class="bg-white hover:bg-slate-100 text-secondary px-3 sm:px-4 py-3 text-[10px] sm:text-xs font-black uppercase transition-colors border-l border-slate-200 flex items-center gap-1 sm:gap-2 whitespace-nowrap">
+            <span class="material-symbols-outlined text-sm">content_copy</span> <span class="hidden sm:inline">Ghi chép</span>
           </button>
         </div>
 
         <!-- Result M-Key -->
         <div class="w-full text-left mb-2 text-xs font-semibold text-rose-500 uppercase">Master Key (Cầm Chìa Này Để Xóa File)</div>
         <div class="w-full flex items-center bg-rose-50 rounded-xl overflow-hidden border border-rose-200 focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/10 transition-all mb-6">
-          <input id="result-key" class="bg-transparent border-none focus:ring-0 text-rose-600 font-bold text-sm px-4 py-3 flex-grow font-mono" readonly type="password" />
-          <button id="btn-copy-key" class="bg-white hover:bg-rose-100 text-rose-600 px-4 py-3 text-xs font-black uppercase transition-colors border-l border-rose-200 flex items-center gap-2">
-            <span class="material-symbols-outlined text-sm">key</span> Copy Mã
+          <input id="result-key" class="bg-transparent border-none focus:ring-0 text-rose-600 font-bold text-xs sm:text-sm pl-4 pr-2 py-3 flex-grow font-mono min-w-0" readonly type="password" />
+          <button id="btn-copy-key" class="bg-white hover:bg-rose-100 text-rose-600 px-3 sm:px-4 py-3 text-[10px] sm:text-xs font-black uppercase transition-colors border-l border-rose-200 flex items-center gap-1 sm:gap-2 whitespace-nowrap">
+            <span class="material-symbols-outlined text-sm">key</span> <span class="hidden sm:inline">Copy Mã</span>
           </button>
         </div>
 
-        <div class="flex gap-4 w-full">
-          <button class="flex-1 py-3 bg-slate-100 hover:bg-slate-200 rounded-xl text-sm font-bold text-slate-600 transition-colors" onclick="window.location.reload()">Trang chủ</button>
-          <button id="btn-new-upload" class="flex-1 py-3 bg-secondary text-white rounded-xl text-sm font-black uppercase tracking-widest hover:shadow-xl hover:shadow-secondary/30 hover:scale-105 active:scale-95 transition-all">Upload Khác</button>
+        <div class="flex flex-col sm:flex-row gap-4 w-full">
+          <button class="w-full sm:flex-1 py-3 bg-slate-100 hover:bg-slate-200 rounded-xl text-sm font-bold text-slate-600 transition-colors" onclick="window.location.reload()">Trang chủ</button>
+          <button id="btn-new-upload" class="w-full sm:flex-1 py-3 bg-secondary text-white rounded-xl text-sm font-black uppercase tracking-widest hover:shadow-xl hover:shadow-secondary/30 hover:scale-105 active:scale-95 transition-all">Upload Khác</button>
         </div>
       </div>
     </div>
@@ -193,7 +189,7 @@
 
         <!-- Ready State -->
         <div id="dl-state-ready" class="flex-col items-center justify-center py-12 hidden">
-          <div class="w-full max-w-lg glass-card p-8 rounded-lg shadow-[0_10px_40px_-10px_rgba(0,0,0,0.05)] relative overflow-hidden group border border-white/60 mx-auto bg-white">
+          <div class="w-full max-w-lg glass-card p-6 sm:p-8 rounded-lg shadow-[0_10px_40px_-10px_rgba(0,0,0,0.05)] relative overflow-hidden group border border-white/60 mx-auto bg-white">
             <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-40 group-hover:animate-pulse"></div>
             
             <div class="flex flex-col items-center gap-6">
@@ -217,11 +213,11 @@
                 <p id="dl-expiry-text" class="text-xs font-medium text-red-600">File này có thể cháy tự động ngay sau khi bạn xem, hoặc sau khi mãn hạn lưu giữ Server.</p>
               </div>
 
-              <div class="flex gap-4 w-full mt-2" id="download-action-group">
-                <button id="btn-view" class="flex-1 py-4 bg-white text-[#6a1cf6] border border-[#6a1cf6] font-headline font-bold text-sm lg:text-lg rounded-lg transition-all duration-200 hover:bg-slate-50 flex items-center justify-center gap-2">
+              <div class="flex flex-col sm:flex-row gap-4 w-full mt-2" id="download-action-group">
+                <button id="btn-view" class="w-full sm:flex-1 py-4 bg-white text-[#6a1cf6] border border-[#6a1cf6] font-headline font-bold text-sm lg:text-lg rounded-lg transition-all duration-200 hover:bg-slate-50 flex items-center justify-center gap-2">
                   <span class="material-symbols-outlined">visibility</span> Xem trực tiếp
                 </button>
-                <a id="btn-download" href="#" target="_blank" class="flex-1 py-4 bg-gradient-to-r from-[#6a1cf6] to-[#00D4FF] text-white font-headline font-bold text-sm lg:text-lg rounded-lg neon-glow transition-all duration-200 hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2">
+                <a id="btn-download" href="#" target="_blank" class="w-full sm:flex-1 py-4 bg-gradient-to-r from-[#6a1cf6] to-[#00D4FF] text-white font-headline font-bold text-sm lg:text-lg rounded-lg neon-glow transition-all duration-200 hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2">
                   <span class="material-symbols-outlined">download</span> Download
                 </a>
               </div>
@@ -259,7 +255,7 @@
     <!-- ============================================== -->
     <section id="view-manage" class="view hidden w-full">
       <div class="w-full max-w-2xl mx-auto flex flex-col gap-6">
-        <div class="glass-card p-10 rounded-2xl border border-white text-center shadow-sm">
+        <div class="glass-card p-6 sm:p-10 rounded-2xl border border-white text-center shadow-sm">
           <div class="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center border border-slate-200 mx-auto mb-6">
             <span class="material-symbols-outlined text-4xl text-slate-500">vpn_key</span>
           </div>
@@ -277,7 +273,7 @@
           </div>
         </div>
 
-        <div id="manage-result" class="glass-card p-8 rounded-2xl border border-white shadow-sm flex flex-col gap-4 hidden bg-white">
+        <div id="manage-result" class="glass-card p-6 sm:p-8 rounded-2xl border border-white shadow-sm flex flex-col gap-4 hidden bg-white">
             <!-- JS inserts File DOM inside here -->
         </div>
       </div>
