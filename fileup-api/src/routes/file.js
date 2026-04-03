@@ -1,13 +1,57 @@
+// ---------------------------------------------------------------------------
+// file.js — GET /file/:id route (Security-hardened)
+//
+// SECURITY FIXES APPLIED:
+//   [FIX-2] XSS & unsafe Content-Type: MIME type whitelist. Types not on the
+//           "safe to inline" list are served with Content-Disposition: attachment,
+//           forcing a browser download instead of rendering (prevents XSS via
+//           SVG, HTML, JS, etc.).
+//   [FIX-2] Added X-Content-Type-Options: nosniff header to prevent MIME
+//           sniffing attacks in older browsers.
+//   [FIX-4] UUID path param validation: regex check before any DB query to
+//           prevent unnecessary DB load and potential injection vectors.
+//   [FIX-9] Replaced console.log with request.log (Fastify structured logger).
+// ---------------------------------------------------------------------------
 import { query } from '../services/db.js';
 import { getFileStream } from '../services/storage.js';
 import { pipeline } from 'node:stream/promises';
+
+// [FIX-4] UUID v4 regex — validate :id param before touching the database
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+// [FIX-2] MIME types that browsers can safely render inline without XSS risk.
+// Everything NOT in this set will be forced to download (attachment).
+const SAFE_INLINE_TYPES = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+  'image/avif',
+  'image/bmp',
+  'image/tiff',
+  'video/mp4',
+  'video/webm',
+  'video/ogg',
+  'audio/mpeg',
+  'audio/ogg',
+  'audio/wav',
+  'audio/webm',
+  'application/pdf',
+  'text/plain',         // plain text is safe; HTML/JS/SVG are NOT
+]);
 
 /**
  * GET /file/:id
  *
  * Streams a stored file to the client.
  *
+ * Security headers added:
+ *   - X-Content-Type-Options: nosniff          [FIX-2]
+ *   - Content-Disposition: attachment (unsafe types) [FIX-2]
+ *
  * Errors:
+ *   400 — invalid UUID format
  *   404 — file not found in DB
  *   403 — link has expired
  *   500 — R2 retrieval failure
@@ -16,8 +60,14 @@ export default async function fileRoute(fastify) {
   fastify.get('/file/:id', async (request, reply) => {
     const { id } = request.params;
 
+    // [FIX-4] Validate UUID format BEFORE running any DB query.
+    // Rejects obviously malformed IDs immediately (no DB round-trip).
+    if (!UUID_REGEX.test(id)) {
+      return reply.code(400).send({ error: 'Invalid file ID format' });
+    }
+
     // -------------------------------------------------------
-    // Lookup file metadata from DB
+    // Lookup file metadata from DB (parameterized query retained)
     // -------------------------------------------------------
     let file;
     try {
@@ -29,7 +79,8 @@ export default async function fileRoute(fastify) {
       );
       file = result.rows[0];
     } catch (err) {
-      request.log.error({ err }, 'DB lookup failed');
+      // [FIX-9] Structured logger
+      request.log.error({ err }, '[File] DB lookup failed');
       return reply.code(500).send({ error: 'Internal server error' });
     }
 
@@ -54,17 +105,29 @@ export default async function fileRoute(fastify) {
     try {
       fileStream = await getFileStream(file.storage_key);
     } catch (err) {
-      request.log.error({ err }, 'R2 fetch failed');
+      request.log.error({ err }, '[File] R2 fetch failed');
       return reply.code(500).send({ error: 'Failed to retrieve file' });
     }
 
-    const filename = file.original_filename || 'download';
+    // [FIX-2] Determine disposition based on MIME type whitelist.
+    // Unsafe types (HTML, SVG, JS, XML, etc.) are forced to download.
     const contentType = file.content_type || 'application/octet-stream';
+    const filename = file.original_filename || 'download';
 
-    // Set response headers before streaming
+    const isSafeInline = SAFE_INLINE_TYPES.has(contentType.toLowerCase().split(';')[0].trim());
+    const disposition = isSafeInline
+      ? `inline; filename="${encodeURIComponent(filename)}"`
+      : `attachment; filename="${encodeURIComponent(filename)}"`;   // force download
+
+    // [FIX-2] Set security headers before streaming
     reply.headers({
+      // Serve the Content-Type exactly as stored — do NOT allow the browser to sniff
       'Content-Type': contentType,
-      'Content-Disposition': `inline; filename="${encodeURIComponent(filename)}"`,
+      // [FIX-2] Prevent MIME sniffing (e.g. treating text/plain as text/html)
+      'X-Content-Type-Options': 'nosniff',
+      // [FIX-2] Inline only for safe types; everything else forces a download
+      'Content-Disposition': disposition,
+      // Content-Length assists browsers with progress bars — safe to include
       ...(file.size_bytes ? { 'Content-Length': String(file.size_bytes) } : {}),
     });
 
@@ -74,7 +137,7 @@ export default async function fileRoute(fastify) {
     } catch (err) {
       // Client may have disconnected mid-stream — log but don't send a new response
       if (err.code !== 'ERR_STREAM_PREMATURE_CLOSE') {
-        request.log.error({ err }, 'Stream pipeline error');
+        request.log.error({ err }, '[File] Stream pipeline error');
       }
     }
   });
