@@ -115,7 +115,11 @@ export default async function fileRoute(fastify) {
     const filename = file.original_filename || 'download';
 
     const isSafeInline = SAFE_INLINE_TYPES.has(contentType.toLowerCase().split(';')[0].trim());
-    const disposition = isSafeInline
+    
+    // Cờ đặc biệt từ Frontend để cưỡng bức tải xuống thay vì View
+    const forceDownload = request.query.download === '1';
+
+    const disposition = (isSafeInline && !forceDownload)
       ? `inline; filename="${encodeURIComponent(filename)}"`
       : `attachment; filename="${encodeURIComponent(filename)}"`;   // force download
 
