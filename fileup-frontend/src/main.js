@@ -33,23 +33,27 @@ let currentFile = null;
 // 1. ROUTER ĐƠN GIẢN
 // ==========================================
 function handleRouting() {
-  const hash = window.location.hash;
+  const hash = window.location.hash || '#';
   const urlParams = new URLSearchParams(window.location.search);
 
-  // Hide all sections
+  // Reset tab
   document.querySelectorAll('.view').forEach(v => v.classList.remove('section-active'));
+  document.getElementById('nav-upload')?.classList.remove('active');
+  document.getElementById('nav-manage')?.classList.remove('active');
 
   if (urlParams.has('dl')) {
     // Mode Download
     document.getElementById('view-download').classList.add('section-active');
     handleDownloadMode(urlParams.get('dl'));
-  } else if (urlParams.has('manage')) {
+  } else if (hash === '#manage' || urlParams.has('manage')) {
     // Mode Manage
     document.getElementById('view-manage').classList.add('section-active');
+    document.getElementById('nav-manage')?.classList.add('active');
     handleManageMode();
   } else {
     // Mode Upload (Default)
     document.getElementById('view-upload').classList.add('section-active');
+    document.getElementById('nav-upload')?.classList.add('active');
     resetUploadState();
   }
 }
@@ -127,8 +131,9 @@ btnUpload.addEventListener('click', async () => {
     elLoadingPanel.classList.add('hidden');
     elSuccessPanel.classList.remove('hidden');
 
-    // Gán dữ liệu trả về URL mới cho local web (chứ ko phải trả url api thẳng)
-    const viewUrl = window.location.origin + '/?dl=' + data.url.split('/').pop();
+    // Nhét thông tin File vào thẳng url để người nhận link thấy được file gì mà ko cần gọi Backend (Bảo vệ Backend)
+    const encodedName = encodeURIComponent(currentFile.name);
+    const viewUrl = window.location.origin + '/?dl=' + data.url.split('/').pop() + `&n=${encodedName}&s=${currentFile.size}&t=${currentFile.type.split('/')[0]}`;
     elResultUrl.value = viewUrl;
     elResultKey.value = data.management_key || 'No Key Generated';
 
@@ -159,19 +164,47 @@ function handleDownloadMode(fileId) {
   const elStateReady = document.getElementById('dl-state-ready');
   const elStateError = document.getElementById('dl-state-error');
 
-  // Setup link tải trực tiếp (Chỉ ấn download mới gọi lên server)
-  document.getElementById('btn-download').href = `${API_URL}/file/${fileId}`;
+  const urlParams = new URLSearchParams(window.location.search);
+  const rawName = urlParams.get('n');
+  const rawSize = urlParams.get('s');
+  const fileType = urlParams.get('t');
 
-  // Fake loading một chút cho UI mượt
+  const fileName = rawName ? decodeURIComponent(rawName) : "File được chia sẻ ẩn danh";
+  const fileSize = rawSize ? formatBytes(parseInt(rawSize)) : "--";
+  const fileApiUrl = `${API_URL}/file/${fileId}`;
+
+  // Setup link tải trực tiếp
+  document.getElementById('btn-download').href = fileApiUrl;
+  
+  // Hiển thị thông tin
+  document.getElementById('dl-filename').textContent = fileName;
+  document.getElementById('dl-filesize').textContent = fileSize;
+  document.getElementById('dl-expiry-text').textContent = "Chú ý: File có tính năng tự động bị huỷ hoặc tải 1 lần!";
+
+  // Preview Media (Ảnh / Video)
+  const previewContainer = document.getElementById('dl-preview-container');
+  if (previewContainer) {
+    previewContainer.innerHTML = '';
+    
+    if (fileType === 'image') {
+      previewContainer.innerHTML = `<img src="${fileApiUrl}" style="max-width:100%; border-radius:12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);" alt="Preview"/>`;
+      previewContainer.classList.remove('hidden');
+      document.querySelector('#dl-state-ready .big-icon').classList.add('hidden'); // Dấu icon thay bằng ảnh
+    } else if (fileType === 'video') {
+      previewContainer.innerHTML = `<video src="${fileApiUrl}" controls style="max-width:100%; border-radius:12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);"></video>`;
+      previewContainer.classList.remove('hidden');
+      document.querySelector('#dl-state-ready .big-icon').classList.add('hidden');
+    } else {
+      document.querySelector('#dl-state-ready .big-icon').classList.remove('hidden');
+      previewContainer.classList.add('hidden');
+    }
+  }
+
+  // Quá trình Fake loading cho mượt
   setTimeout(() => {
     elStateLoading.classList.add('hidden');
-    // Với File2Url hiện tại, GET /file/:id trực tiếp stream ra file nên không check metadata qua api được bằng CORS 
-    // Trừ khi bạn xây endpoint GET /file/meta/:id. Tạm thời show state ready luôn.
-
-    document.getElementById('dl-filename').textContent = "File được bảo vệ";
-    document.getElementById('dl-expiry-text').textContent = "Chú ý: File có tính năng tự động bị tiêu huỷ!";
     elStateReady.classList.remove('hidden');
-  }, 1000);
+  }, 800);
 }
 
 // ==========================================

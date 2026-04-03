@@ -21,9 +21,15 @@
 
   <main class="app-container glass-panel">
     
-    <header class="logo">
-      <i data-lucide="cloud-lightning"></i>
-      <h1>File2Url</h1>
+    <header class="top-nav">
+      <div class="logo">
+        <i data-lucide="cloud-lightning"></i>
+        <h1>File2Url</h1>
+      </div>
+      <nav class="nav-links">
+        <a href="#" id="nav-upload" class="active">Upload File</a>
+        <a href="#manage" id="nav-manage">Quản lý File</a>
+      </nav>
     </header>
 
     <!-- SECTION 1: UPLOAD PAGE -->
@@ -116,6 +122,7 @@
         <i data-lucide="file-check-2" class="big-icon neon-blue"></i>
         <h2 id="dl-filename" class="text-truncate">filename.zip</h2>
         <p id="dl-filesize" class="badge">--</p>
+        <div id="dl-preview-container" class="hidden" style="margin-bottom: 20px;"></div>
         <p id="dl-expiry-text" class="expiry-warning"></p>
         
         <a id="btn-download" class="btn-primary" href="#" target="_blank">
