@@ -35,7 +35,7 @@ let currentFile = null;
 function handleRouting() {
   const hash = window.location.hash;
   const urlParams = new URLSearchParams(window.location.search);
-  
+
   // Hide all sections
   document.querySelectorAll('.view').forEach(v => v.classList.remove('section-active'));
 
@@ -77,7 +77,7 @@ function handleFileSelect(file) {
   currentFile = file;
   elSelectedName.textContent = file.name;
   elSelectedSize.textContent = formatBytes(file.size);
-  
+
   elDropzone.classList.add('hidden');
   elUploadPanel.classList.remove('hidden');
 }
@@ -121,12 +121,12 @@ btnUpload.addEventListener('click', async () => {
   try {
     const res = await fetch(`${API_URL}/upload`, { method: 'POST', body: formData });
     const data = await res.json();
-    
+
     if (!res.ok) throw new Error(data.error || 'Upload failed');
-    
+
     elLoadingPanel.classList.add('hidden');
     elSuccessPanel.classList.remove('hidden');
-    
+
     // Gán dữ liệu trả về URL mới cho local web (chứ ko phải trả url api thẳng)
     const viewUrl = window.location.origin + '/?dl=' + data.url.split('/').pop();
     elResultUrl.value = viewUrl;
@@ -158,7 +158,7 @@ function handleDownloadMode(fileId) {
   const elStateLoading = document.getElementById('dl-state-loading');
   const elStateReady = document.getElementById('dl-state-ready');
   const elStateError = document.getElementById('dl-state-error');
-  
+
   // Setup link tải trực tiếp (Chỉ ấn download mới gọi lên server)
   document.getElementById('btn-download').href = `${API_URL}/file/${fileId}`;
 
@@ -167,7 +167,7 @@ function handleDownloadMode(fileId) {
     elStateLoading.classList.add('hidden');
     // Với File2Url hiện tại, GET /file/:id trực tiếp stream ra file nên không check metadata qua api được bằng CORS 
     // Trừ khi bạn xây endpoint GET /file/meta/:id. Tạm thời show state ready luôn.
-    
+
     document.getElementById('dl-filename').textContent = "File được bảo vệ";
     document.getElementById('dl-expiry-text').textContent = "Chú ý: File có tính năng tự động bị tiêu huỷ!";
     elStateReady.classList.remove('hidden');
@@ -180,13 +180,13 @@ function handleDownloadMode(fileId) {
 function handleManageMode() {
   document.getElementById('btn-manage-search').addEventListener('click', async () => {
     const key = document.getElementById('input-manage-key').value;
-    if(!key) return;
+    if (!key) return;
 
     try {
       const res = await fetch(`${API_URL}/manage/${key}`);
       const data = await res.json();
-      
-      if(!res.ok) throw new Error(data.error);
+
+      if (!res.ok) throw new Error(data.error);
 
       const html = `
         <div class="result-box mt-20">
@@ -201,12 +201,12 @@ function handleManageMode() {
 
       // Bind delete action
       document.getElementById('force-delete').addEventListener('click', async () => {
-         await fetch(`${API_URL}/manage/${key}`, {method: 'DELETE'});
-         alert('File đã tan tành mây khói!');
-         window.location.reload();
+        await fetch(`${API_URL}/manage/${key}`, { method: 'DELETE' });
+        alert('File đã tan tành mây khói!');
+        window.location.reload();
       });
 
-    } catch(err) {
+    } catch (err) {
       alert("Không tìm thấy file với key này, hoặc đã bị dọn rác xoá bỏ!");
     }
   });
