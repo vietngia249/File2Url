@@ -94,8 +94,8 @@ export default function UploadPage() {
       <div className="absolute bottom-[-10%] right-[-5%] w-[40%] h-[60%] bg-secondary-container/10 rounded-full blur-[120px] -z-10"></div>
 
       {/* Hero Section */}
-      <section className="max-w-4xl text-center px-6 mb-16">
-        <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-6 text-gradient leading-tight font-headline">
+      <section className="max-w-4xl text-center px-4 md:px-6 mb-12 flex flex-col items-center">
+        <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight mb-4 text-gradient leading-snug pb-2 font-headline max-w-3xl">
           Secure File Sharing. <br/>Your Rules, Your Storage.
         </h1>
         <p className="text-on-surface-variant text-lg md:text-xl max-w-2xl mx-auto font-body leading-relaxed">
@@ -104,12 +104,12 @@ export default function UploadPage() {
       </section>
 
       {/* Primary Upload Canvas */}
-      <section className="w-full max-w-3xl px-6 relative">
-        <div className="glass-panel rounded-3xl p-10 shadow-[0_20px_50px_rgba(0,0,0,0.05)] transition-all duration-500">
+      <section className="w-full max-w-3xl px-0 md:px-6 relative">
+        <div className="glass-panel rounded-3xl p-6 md:p-10 shadow-[0_20px_50px_rgba(0,0,0,0.05)] transition-all duration-500">
           
           {/* Dropzone */}
           <div 
-            className={`group relative flex flex-col items-center justify-center border-2 border-dashed rounded-2xl py-24 cursor-pointer transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${dragActive ? 'border-primary-container bg-primary/10' : 'border-outline-variant/30 hover:border-primary-container/40 hover:bg-primary/5'}`}
+            className={`group relative flex flex-col items-center justify-center border-2 border-dashed rounded-2xl py-12 md:py-24 cursor-pointer transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${dragActive ? 'border-primary-container bg-primary/10' : 'border-outline-variant/30 hover:border-primary-container/40 hover:bg-primary/5'}`}
             onDragEnter={handleDrag}
             onDragLeave={handleDrag}
             onDragOver={handleDrag}
@@ -187,7 +187,7 @@ export default function UploadPage() {
                   {/* Storage Toggle */}
                   <div className="md:col-span-2 space-y-2">
                     <label className="text-xs font-bold uppercase tracking-widest text-outline">Storage Destination</label>
-                    <div className="flex p-1 bg-surface-container-low rounded-xl gap-1">
+                    <div className="flex flex-col sm:flex-row p-1 bg-surface-container-low rounded-xl gap-1">
                       <button 
                         onClick={() => setStorageConfig('r2')}
                         className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm transition-all ${
@@ -229,18 +229,18 @@ export default function UploadPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
             <div className="bg-surface-container-low p-6 rounded-2xl flex flex-col gap-3 group hover:bg-surface-container-lowest transition-all">
               <span className="material-symbols-outlined text-primary" style={{fontVariationSettings: "'FILL' 1"}}>shield_lock</span>
-              <h3 className="font-bold text-on-surface">End-to-End</h3>
-              <p className="text-xs text-on-surface-variant leading-relaxed">Your files are encrypted in-transit based on strict protocols.</p>
+              <h3 className="font-bold text-on-surface uppercase tracking-wide text-[13px]">End-to-End</h3>
+              <p className="text-sm text-on-surface-variant leading-relaxed">Your files are encrypted in-transit based on strict protocols.</p>
             </div>
             <div className="bg-surface-container-low p-6 rounded-2xl flex flex-col gap-3 group hover:bg-surface-container-lowest transition-all">
               <span className="material-symbols-outlined text-tertiary" style={{fontVariationSettings: "'FILL' 1"}}>timer</span>
-              <h3 className="font-bold text-on-surface">Auto-Destruct</h3>
-              <p className="text-xs text-on-surface-variant leading-relaxed">Files vanish into light based on your specific view limits.</p>
+              <h3 className="font-bold text-on-surface uppercase tracking-wide text-[13px]">Auto-Destruct</h3>
+              <p className="text-sm text-on-surface-variant leading-relaxed">Files vanish into light based on your specific view limits.</p>
             </div>
             <div className="bg-surface-container-low p-6 rounded-2xl flex flex-col gap-3 group hover:bg-surface-container-lowest transition-all">
               <span className="material-symbols-outlined text-secondary" style={{fontVariationSettings: "'FILL' 1"}}>hub</span>
-              <h3 className="font-bold text-on-surface">Cloud Bridges</h3>
-              <p className="text-xs text-on-surface-variant leading-relaxed">Directly conduit files into your personal Google Drive.</p>
+              <h3 className="font-bold text-on-surface uppercase tracking-wide text-[13px]">Cloud Bridges</h3>
+              <p className="text-sm text-on-surface-variant leading-relaxed">Directly conduit files into your personal Google Drive.</p>
             </div>
           </div>
         )}

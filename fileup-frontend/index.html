@@ -27,7 +27,13 @@
       .text-gradient {
         background: linear-gradient(135deg, #3525cd, #571ac0);
         -webkit-background-clip: text;
+        background-clip: text;
         -webkit-text-fill-color: transparent;
+      }
+      .text-gradient::selection {
+        -webkit-text-fill-color: #ffffff;
+        color: #ffffff;
+        background-color: rgba(53, 37, 205, 0.9);
       }
     </style>
   </head>

@@ -17,8 +17,8 @@ export default function ManageIndex() {
   };
 
   return (
-    <div className="flex-1 flex items-center justify-center pt-20 px-6">
-      <div className="relative w-full max-w-lg">
+    <div className="flex-1 flex items-center justify-center w-full max-w-lg mx-auto">
+      <div className="relative w-full">
         {/* Glow effects */}
         <div className="absolute top-0 right-0 -mr-12 -mt-12 w-64 h-64 bg-primary/20 rounded-full blur-[80px] pointer-events-none"></div>
         <div className="absolute bottom-0 left-0 -ml-12 -mb-12 w-64 h-64 bg-tertiary/20 rounded-full blur-[80px] pointer-events-none"></div>

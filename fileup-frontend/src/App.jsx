@@ -36,14 +36,14 @@ export default function App() {
             <span className="text-xl font-bold tracking-tight text-indigo-700 dark:text-indigo-300">File2Url V2</span>
           </Link>
           <div className="flex justify-center flex-1 mx-8 hidden md:flex items-center gap-8">
-            <Link 
-              to="/" 
+            <Link
+              to="/"
               className={`text-sm font-semibold transition-all pb-1 ${location.pathname === '/' ? 'text-indigo-700 border-b-2 border-indigo-500' : 'text-slate-500 hover:text-primary'}`}
             >
               Home
             </Link>
-            <Link 
-              to="/manage" 
+            <Link
+              to="/manage"
               className={`text-sm font-semibold transition-all pb-1 ${location.pathname.startsWith('/manage') ? 'text-indigo-700 border-b-2 border-indigo-500' : 'text-slate-500 hover:text-primary'}`}
             >
               Manage
@@ -51,7 +51,7 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-4 md:gap-6">
-            <button 
+            <button
               onClick={openAuth}
               className="bg-surface-container-lowest text-on-surface-variant font-medium px-5 py-2 rounded-lg glass-panel hover:scale-[1.02] transition-all flex items-center gap-2"
             >
@@ -63,7 +63,7 @@ export default function App() {
       </nav>
 
       {/* Main Content */}
-      <main className="flex-grow pt-32 pb-20 px-6 relative flex flex-col">
+      <main className="flex-grow pt-32 pb-20 px-4 md:px-6 relative flex flex-col">
         <Routes>
           <Route path="/" element={<UploadPage />} />
           <Route path="/d/:id" element={<DownloadPage />} />
@@ -78,7 +78,7 @@ export default function App() {
           <div className="flex flex-col gap-2 mb-8 md:mb-0">
             <span className="text-sm font-bold text-slate-900 dark:text-slate-100">File2Url V2</span>
             <span className="text-[12px] font-medium tracking-wide uppercase text-slate-400">
-              © 2024 File2Url V2. The Ethereal Conduit.
+              © {new Date().getFullYear()} File2Url V2. The Ethereal Conduit.
             </span>
           </div>
           <div className="flex gap-8">
