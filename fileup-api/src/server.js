@@ -52,7 +52,7 @@ const fastify = Fastify({
   trustProxy: true,
 
   // Body limit covers multipart headers; actual file size is enforced in route
-  bodyLimit: 110 * 1024 * 1024, // 110 MB headroom
+  bodyLimit: 2100 * 1024 * 1024, // 2100 MB headroom for 2GB uploads
 });
 
 // ---------------------------------------------------------------------------
@@ -92,7 +92,7 @@ await fastify.register(rateLimit, {
 // Multipart support for file uploads
 await fastify.register(multipart, {
   limits: {
-    fileSize: 100 * 1024 * 1024, // 100 MB hard cap
+    fileSize: 2000 * 1024 * 1024, // 2000 MB global hard cap (Dynamic limits per-user enforced in route)
     files: 1,                     // one file per request
     fields: 5,
   },

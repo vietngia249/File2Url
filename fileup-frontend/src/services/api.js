@@ -52,7 +52,8 @@ export const api = {
       xhr.open('POST', `${BASE_URL}/upload`, true);
       
       const headers = getAuthHeader();
-      if (headers.Authorization) {
+      // Only attach auth if they DID NOT explicitly choose r2 anonymous upload
+      if (headers.Authorization && options.storageConfig !== 'r2') {
         xhr.setRequestHeader('Authorization', headers.Authorization);
       }
 

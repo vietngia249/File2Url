@@ -70,7 +70,7 @@ export default function ManagePage() {
         <div className="relative flex flex-col md:flex-row md:items-end justify-between gap-8">
             <div className="max-w-2xl">
                 <div className="flex items-center gap-3 mb-4">
-                    <span className="px-3 py-1 rounded-full bg-secondary-container text-on-secondary-container text-[10px] font-bold tracking-widest uppercase">Management Key Active</span>
+                    <span className="px-3 py-1 rounded-full bg-secondary-container text-on-secondary-container text-xs font-bold tracking-widest uppercase">Management Key Active</span>
                     <span className="text-on-surface-variant text-sm font-medium">• {fileData.metadata?.name || 'File'}</span>
                 </div>
                 <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-on-surface mb-6 leading-tight font-headline">
@@ -80,7 +80,7 @@ export default function ManagePage() {
                     <div className="flex items-center gap-2">
                         <span className="material-symbols-outlined text-primary">cloud_upload</span>
                         <div className="flex flex-col">
-                            <span className="text-[10px] uppercase tracking-wider font-bold text-on-surface-variant">Size</span>
+                            <span className="text-xs uppercase tracking-wider font-bold text-on-surface-variant">Size</span>
                             <span className="font-semibold text-sm">
                               {fileData.metadata?.size ? (fileData.metadata.size / 1024 / 1024).toFixed(2) + ' MB' : 'Unknown'}
                             </span>
@@ -89,14 +89,14 @@ export default function ManagePage() {
                     <div className="flex items-center gap-2">
                         <span className="material-symbols-outlined text-primary">visibility</span>
                         <div className="flex flex-col">
-                            <span className="text-[10px] uppercase tracking-wider font-bold text-on-surface-variant">Access</span>
+                            <span className="text-xs uppercase tracking-wider font-bold text-on-surface-variant">Access</span>
                             <span className="font-semibold text-sm">Public Link</span>
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
                         <span className="material-symbols-outlined text-primary">event</span>
                         <div className="flex flex-col">
-                            <span className="text-[10px] uppercase tracking-wider font-bold text-on-surface-variant">Created</span>
+                            <span className="text-xs uppercase tracking-wider font-bold text-on-surface-variant">Created</span>
                             <span className="font-semibold text-sm">
                               {new Date(fileData.created_at).toLocaleDateString()}
                             </span>
@@ -111,7 +111,7 @@ export default function ManagePage() {
                       <div className="w-8 h-8 rounded-full border-2 border-white overflow-hidden bg-slate-200">
                           <img className="w-full h-full object-cover" src={`https://api.dicebear.com/7.x/notionists/svg?seed=${key}&backgroundColor=transparent`} alt="avatar" />
                       </div>
-                      <div className="w-8 h-8 rounded-full border-2 border-white flex items-center justify-center bg-primary text-on-primary text-[10px] font-bold">+ {fileData.current_views}</div>
+                      <div className="w-8 h-8 rounded-full border-2 border-white flex items-center justify-center bg-primary text-on-primary text-xs font-bold">+ {fileData.current_views}</div>
                     </div>
                     <p className="text-xs font-medium text-on-surface-variant">{fileData.current_views} viewers past</p>
                 </div>
@@ -143,7 +143,7 @@ export default function ManagePage() {
                                   required
                                 />
                             </div>
-                            <p className="text-[10px] text-on-surface-variant px-1 italic">The conduit will automatically collapse at this time.</p>
+                            <p className="text-xs text-on-surface-variant px-1 italic">The conduit will automatically collapse at this time.</p>
                         </div>
                         {/* Max Views */}
                         <div className="space-y-2">
@@ -157,7 +157,7 @@ export default function ManagePage() {
                                   required
                                 />
                             </div>
-                            <p className="text-[10px] text-on-surface-variant px-1 italic">Total download capacity before expiration.</p>
+                            <p className="text-xs text-on-surface-variant px-1 italic">Total download capacity before expiration.</p>
                         </div>
                     </div>
                     {/* Update Settings Action */}
@@ -199,11 +199,11 @@ export default function ManagePage() {
             <div className="grid grid-cols-2 gap-4">
                 <div className="bg-surface-container-lowest p-6 rounded-3xl shadow-[0_4px_24px_-1px_rgba(0,0,0,0.04)] text-center">
                     <div className="text-primary text-3xl font-extrabold mb-1 font-headline">{fileData.current_views}</div>
-                    <div className="text-[10px] uppercase font-bold text-on-surface-variant tracking-wider">Views</div>
+                    <div className="text-xs uppercase font-bold text-on-surface-variant tracking-wider">Views</div>
                 </div>
                 <div className="bg-surface-container-lowest p-6 rounded-3xl shadow-[0_4px_24px_-1px_rgba(0,0,0,0.04)] text-center">
                     <div className="text-tertiary text-3xl font-extrabold mb-1 font-headline">{fileData.max_views - fileData.current_views}</div>
-                    <div className="text-[10px] uppercase font-bold text-on-surface-variant tracking-wider">Remaining</div>
+                    <div className="text-xs uppercase font-bold text-on-surface-variant tracking-wider">Remaining</div>
                 </div>
             </div>
 

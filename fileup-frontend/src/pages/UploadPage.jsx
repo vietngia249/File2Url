@@ -57,6 +57,14 @@ export default function UploadPage() {
 
   const handleUpload = async () => {
     if (!file) return;
+
+    // Frontend File Size Quota Check
+    const limitBytes = storageConfig === 'r2' ? 50 * 1024 * 1024 : 2000 * 1024 * 1024;
+    if (file.size > limitBytes) {
+      addToast(`File too large! Limits: ${storageConfig === 'r2' ? '50MB for Anonymous R2' : '2GB for Google Drive'}.`, 'error');
+      return;
+    }
+
     setIsUploading(true);
     
     // Convert local datetime-local string to true ISO string
@@ -95,7 +103,7 @@ export default function UploadPage() {
 
       {/* Hero Section */}
       <section className="max-w-4xl text-center px-4 md:px-6 mb-12 flex flex-col items-center">
-        <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight mb-4 text-gradient leading-snug pb-2 font-headline max-w-3xl">
+        <h1 className="text-3xl md:text-5xl lg:text-6xl font-extrabold tracking-tight mb-4 bg-gradient-to-r from-indigo-700 to-indigo-500 bg-clip-text text-transparent leading-snug pb-2 font-headline max-w-3xl">
           Secure File Sharing. <br/>Your Rules, Your Storage.
         </h1>
         <p className="text-on-surface-variant text-lg md:text-xl max-w-2xl mx-auto font-body leading-relaxed">
@@ -109,7 +117,7 @@ export default function UploadPage() {
           
           {/* Dropzone */}
           <div 
-            className={`group relative flex flex-col items-center justify-center border-2 border-dashed rounded-2xl py-12 md:py-24 cursor-pointer transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${dragActive ? 'border-primary-container bg-primary/10' : 'border-outline-variant/30 hover:border-primary-container/40 hover:bg-primary/5'}`}
+            className={`group relative flex flex-col items-center justify-center border-2 rounded-2xl py-12 md:py-24 cursor-pointer transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${dragActive ? 'border-primary/50 border-solid bg-primary/10' : 'border-dashed border-outline-variant/30 hover:border-primary/50 hover:bg-primary/5'}`}
             onDragEnter={handleDrag}
             onDragLeave={handleDrag}
             onDragOver={handleDrag}
@@ -125,10 +133,14 @@ export default function UploadPage() {
             <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-3 transition-transform">
               <span className="material-symbols-outlined text-primary text-3xl">upload_file</span>
             </div>
-            <p className="text-on-surface font-semibold text-lg mb-1">
-              {file ? file.name : "Drop file here or click to browse"}
+            <p className="text-on-surface font-semibold text-lg mb-1 text-center px-4">
+              {file ? file.name : (dragActive ? "Drop to secure conduit" : "Drop file here or click to browse")}
             </p>
-            <p className="text-on-surface-variant text-sm">Supports any file type up to 2GB</p>
+            <p className="text-on-surface-variant text-sm">
+              {storageConfig === 'r2' 
+                ? "Supports files up to 50MB (Cloudflare R2)" 
+                : "Supports files up to 2GB (Google Drive)"}
+            </p>
             <div className="absolute inset-0 bg-secondary-container/5 opacity-0 group-hover:opacity-100 transition-opacity blur-2xl -z-10 rounded-2xl"></div>
           </div>
 
@@ -157,31 +169,31 @@ export default function UploadPage() {
                   
                   {/* Expiry Picker */}
                   <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-widest text-outline">Expiry Timer</label>
-                    <div className="flex items-center gap-2 bg-surface-container-low p-1 rounded-xl">
+                    <span className="block text-xs font-bold uppercase tracking-widest text-outline">Expiry Timer</span>
+                    <label className="flex items-center gap-2 bg-surface-container-low p-1 rounded-xl cursor-text group focus-within:ring-2 focus-within:ring-primary/20 transition-all">
                       <input 
-                        className="w-full bg-transparent border-none focus:ring-0 text-sm py-2 px-3 text-on-surface-variant" 
+                        className="w-full bg-transparent border-none focus:ring-0 text-sm py-2 px-3 text-on-surface-variant outline-none" 
                         type="datetime-local" 
                         value={expiresAt}
                         onChange={e => setExpiresAt(e.target.value)}
                       />
-                      <span className="material-symbols-outlined text-outline pr-3">event</span>
-                    </div>
+                      <span className="material-symbols-outlined text-outline pr-3 group-hover:text-primary transition-colors">event</span>
+                    </label>
                   </div>
 
                   {/* Max Views */}
                   <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-widest text-outline">Max Views</label>
-                    <div className="flex items-center gap-2 bg-surface-container-low p-1 rounded-xl">
+                    <span className="block text-xs font-bold uppercase tracking-widest text-outline">Max Views</span>
+                    <label className="flex items-center gap-2 bg-surface-container-low p-1 rounded-xl cursor-text group focus-within:ring-2 focus-within:ring-primary/20 transition-all">
                       <input 
-                        className="w-full bg-transparent border-none focus:ring-0 text-sm py-2 px-3 text-on-surface-variant" 
+                        className="w-full bg-transparent border-none focus:ring-0 text-sm py-2 px-3 text-on-surface-variant outline-none" 
                         min="1" 
                         type="number" 
                         value={maxViews}
                         onChange={e => setMaxViews(e.target.value)}
                       />
-                      <span className="material-symbols-outlined text-outline pr-3">visibility</span>
-                    </div>
+                      <span className="material-symbols-outlined text-outline pr-3 group-hover:text-primary transition-colors">visibility</span>
+                    </label>
                   </div>
 
                   {/* Storage Toggle */}

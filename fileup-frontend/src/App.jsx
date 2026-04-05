@@ -28,10 +28,10 @@ export default function App() {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col overflow-hidden relative">
       {/* TopNavBar */}
       <nav className="fixed top-0 left-0 right-0 z-40 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl shadow-[0_4px_24px_-1px_rgba(0,0,0,0.04)]">
-        <div className="flex justify-between items-center px-8 py-4 w-full max-w-7xl mx-auto">
+        <div className="flex justify-between items-center px-4 md:px-6 py-2 md:py-3 w-full max-w-7xl mx-auto">
           <Link to="/" className="flex items-center gap-2">
             <span className="text-xl font-bold tracking-tight text-indigo-700 dark:text-indigo-300">File2Url V2</span>
           </Link>
@@ -63,7 +63,7 @@ export default function App() {
       </nav>
 
       {/* Main Content */}
-      <main className="flex-grow pt-32 pb-20 px-4 md:px-6 relative flex flex-col">
+      <main className="flex-grow pt-16 md:pt-24 pb-8 md:pb-16 px-4 md:px-6 relative flex flex-col">
         <Routes>
           <Route path="/" element={<UploadPage />} />
           <Route path="/d/:id" element={<DownloadPage />} />
@@ -74,7 +74,7 @@ export default function App() {
 
       {/* Footer */}
       <footer className="bg-slate-50 dark:bg-slate-950 border-t border-transparent z-10">
-        <div className="flex flex-col md:flex-row justify-between items-center px-8 py-12 w-full max-w-7xl mx-auto">
+        <div className="flex flex-col md:flex-row justify-between items-center px-4 md:px-6 py-6 md:py-8 w-full max-w-7xl mx-auto">
           <div className="flex flex-col gap-2 mb-8 md:mb-0">
             <span className="text-sm font-bold text-slate-900 dark:text-slate-100">File2Url V2</span>
             <span className="text-[12px] font-medium tracking-wide uppercase text-slate-400">

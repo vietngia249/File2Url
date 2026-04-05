@@ -20,8 +20,8 @@ export default function ManageIndex() {
     <div className="flex-1 flex items-center justify-center w-full max-w-lg mx-auto">
       <div className="relative w-full">
         {/* Glow effects */}
-        <div className="absolute top-0 right-0 -mr-12 -mt-12 w-64 h-64 bg-primary/20 rounded-full blur-[80px] pointer-events-none"></div>
-        <div className="absolute bottom-0 left-0 -ml-12 -mb-12 w-64 h-64 bg-tertiary/20 rounded-full blur-[80px] pointer-events-none"></div>
+        <div className="absolute top-0 right-0 -mr-12 -mt-12 w-64 h-64 bg-primary/10 rounded-full blur-[80px] pointer-events-none"></div>
+        <div className="absolute bottom-0 left-0 -ml-12 -mb-12 w-64 h-64 bg-tertiary/5 rounded-full blur-[80px] pointer-events-none"></div>
 
         <div className="relative bg-surface-container-lowest p-10 md:p-14 rounded-[2.5rem] shadow-2xl glass-panel text-center">
           <div className="w-20 h-20 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-8 shadow-inner">
