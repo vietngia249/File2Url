@@ -57,6 +57,51 @@ const SAFE_INLINE_TYPES = new Set([
  *   500 — R2 retrieval failure
  */
 export default async function fileRoute(fastify) {
+  
+  // Endpoint Metadata cho Frontend Download Page (Không trừ view)
+  fastify.get('/file/:id/info', async (request, reply) => {
+    const { id } = request.params;
+    if (!UUID_REGEX.test(id)) {
+      return reply.code(400).send({ error: 'Invalid file ID format' });
+    }
+
+    try {
+      const result = await query(
+        `SELECT original_filename as "name", size_bytes as "size", expires_at, max_views, current_views 
+         FROM files WHERE id = $1`, 
+        [id]
+      );
+      const file = result.rows[0];
+      
+      if (!file) {
+        return reply.code(404).send({ error: 'File not found' });
+      }
+
+      if (file.expires_at && new Date(file.expires_at) < new Date()) {
+         return reply.code(403).send({ error: 'Link Expired' });
+      }
+
+      if (file.max_views !== null && file.current_views >= file.max_views) {
+         return reply.code(403).send({ error: 'Max views reached' });
+      }
+
+      return reply.send({
+        metadata: {
+          name: file.name,
+          size: file.size
+        },
+        expires_at: file.expires_at,
+        max_views: file.max_views,
+        current_views: file.current_views,
+        url: `${request.protocol}://${request.hostname}/file/${id}`
+      });
+
+    } catch (err) {
+      request.log.error({ err }, '[File Info] Lookup failed');
+      return reply.code(500).send({ error: 'Internal server error' });
+    }
+  });
+
   fastify.get('/file/:id', async (request, reply) => {
     const { id } = request.params;
 

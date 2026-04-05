@@ -1,300 +1,45 @@
 <!DOCTYPE html>
-<html class="light" lang="vi">
-<head>
-  <meta charset="utf-8"/>
-  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-  <title>File2Url - Lightning Fast Anonymous Share</title>
-
-  <link href="https://fonts.googleapis.com" rel="preconnect"/>
-  <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-  <!-- App Custom Styles (Tailwind imports & util classes) -->
-  <link rel="stylesheet" href="/src/style.css" />
-</head>
-
-<body class="bg-surface text-on-surface font-body selection:bg-primary/30 selection:text-secondary min-h-screen flex flex-col overflow-x-hidden">
-
-  <!-- TopNavBar Component -->
-  <nav class="fixed top-0 w-full z-50 h-16 bg-white/70 backdrop-blur-xl border-b border-white/40 shadow-[0px_24px_48px_rgba(44,47,49,0.06)]">
-    <div class="flex justify-between items-center px-6 md:px-12 max-w-screen-2xl mx-auto h-full">
-      <div class="flex items-center">
-        <span class="text-xl sm:text-2xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-[#00D4FF] to-[#6a1cf6] font-['Space_Grotesk'] cursor-pointer transition-transform hover:scale-105" onclick="window.location.href='/'">File2Url</span>
-      </div>
-      <div class="flex gap-4 sm:gap-6 font-['Space_Grotesk'] text-sm tracking-tight items-center">
-        <a id="nav-upload" class="text-[#6a1cf6] font-bold border-b-2 border-[#6a1cf6] pb-1 transition-all" href="#">Upload</a>
-        <a id="nav-manage" class="text-slate-600 font-medium hover:text-[#00D4FF] transition-colors" href="#manage">Manage</a>
-      </div>
-      <!-- Account slot empty for anonymous UI -->
+<html lang="en" class="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>File2Url - The Ethereal Conduit</title>
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      .glass-panel {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+      }
+      .hero-gradient {
+          background: radial-gradient(circle at 50% 50%, rgba(87, 223, 254, 0.15) 0%, rgba(53, 37, 205, 0.05) 100%);
+      }
+      .bg-ethereal-gradient {
+        background: linear-gradient(135deg, #3525cd 0%, #4f46e5 50%, #57dffe 100%);
+      }
+      .text-gradient {
+        background: linear-gradient(135deg, #3525cd, #571ac0);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+    </style>
+  </head>
+  <body class="bg-background text-on-surface font-body overflow-x-hidden selection:bg-primary-fixed">
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+    
+    <!-- Decorative Ambient Glows for Background -->
+    <div class="fixed inset-0 pointer-events-none -z-50 overflow-hidden">
+        <div class="absolute -top-40 -left-40 w-[600px] h-[600px] bg-primary/10 blur-[150px] rounded-full mix-blend-multiply"></div>
+        <div class="absolute top-[20%] -right-20 w-[500px] h-[500px] bg-secondary-container/20 blur-[120px] rounded-full mix-blend-multiply"></div>
+        <div class="absolute -bottom-40 left-[20%] w-[800px] h-[600px] bg-tertiary-container/10 blur-[150px] rounded-[100%] mix-blend-multiply"></div>
     </div>
-  </nav>
-
-  <main class="flex-grow pt-24 pb-12 px-4 md:px-8 max-w-5xl mx-auto w-full flex flex-col items-center justify-center gap-12 relative w-full h-full">
-    <!-- Atmospheric Glow Background -->
-    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] ethereal-glow rounded-full pointer-events-none -z-10"></div>
-
-    <!-- ============================================== -->
-    <!-- SECTION 1: UPLOAD PAGE -->
-    <!-- ============================================== -->
-    <section id="view-upload" class="view section-active w-full">
-      
-      <!-- Upload Dashboard: Grid Layout -->
-      <div class="w-full grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <!-- Control Panel (Trái) -->
-        <div class="lg:col-span-7 flex flex-col gap-6 w-full">
-          <!-- Dropzone -->
-          <div id="dropzone" class="w-full glass-panel border-2 border-dashed border-slate-200 hover:border-primary transition-all duration-300 rounded-xl p-6 sm:p-12 flex flex-col items-center justify-center text-center cursor-pointer group hover:shadow-[0_20px_50px_rgba(0,212,255,0.1)] relative overflow-hidden">
-            <input type="file" id="fileInput" hidden />
-            <div class="scanning-line"></div>
-            <div class="bg-white p-6 rounded-2xl mb-6 shadow-sm ring-1 ring-slate-100 transition-transform duration-300 group-hover:scale-110">
-              <span class="material-symbols-outlined text-5xl text-primary" id="icon-upload-state">cloud_upload</span>
-            </div>
-            <h2 id="dropzone-text" class="font-headline text-xl sm:text-2xl pt-2 font-bold tracking-tight mb-2 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent px-4">
-              Kéo thả file vào đây hoặc Click để duyệt
-            </h2>
-            <p id="dropzone-subtext" class="text-on-surface-variant font-label text-[10px] sm:text-xs px-2 uppercase tracking-[0.1em] sm:tracking-widest max-w-sm sm:max-w-md">
-              Hỗ trợ 100MB cho khách ngoài hệ thống.
-            </p>
-            <!-- Design Brackets -->
-            <div class="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-primary/20 rounded-tl-lg"></div>
-            <div class="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-primary/20 rounded-br-lg"></div>
-          </div>
-
-          <!-- Progress Section (Thanh Loading xuất hiện khi tải) -->
-          <div id="upload-progress-panel" class="glass-panel p-6 rounded-xl border border-white shadow-sm hidden">
-            <div class="flex justify-between items-end mb-3">
-              <span class="text-xs font-label uppercase tracking-tighter text-secondary font-bold" id="upload-status-text">Uploading Matrix...</span>
-              <span class="font-headline text-xl font-bold text-slate-800" id="upload-percentage">Vui lòng chờ</span>
-            </div>
-            <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-              <div class="h-full bg-gradient-to-r from-primary to-secondary w-full animate-pulse shadow-[0_0_10px_rgba(0,212,255,0.3)]"></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- File Queue and Settings (Phải) -->
-        <div class="lg:col-span-5 flex flex-col gap-4">
-          <div id="upload-panel" class="glass-panel p-6 rounded-xl border border-white min-h-full shadow-sm hidden">
-            
-            <h3 class="font-headline text-base font-bold mb-4 flex items-center gap-2 text-slate-800 border-b border-slate-100 pb-2">
-              <span class="material-symbols-outlined text-primary">settings</span> Cấu hình & Tệp
-            </h3>
-            
-            <!-- File Queue Element -->
-            <div class="mb-6 space-y-3">
-              <div class="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-100 group shadow-sm hover:border-primary/30 transition-all">
-                <div class="flex items-center gap-3 overflow-hidden">
-                  <div class="w-8 h-8 rounded bg-primary/10 flex items-center justify-center">
-                    <span class="material-symbols-outlined text-primary text-sm">description</span>
-                  </div>
-                  <div class="flex flex-col truncate flex-1 min-w-0 pr-4">
-                    <span id="selected-filename" class="text-sm font-semibold text-slate-700 truncate">demo.zip</span>
-                    <span id="selected-filesize" class="text-[10px] text-slate-400 font-bold">-- MB</span>
-                  </div>
-                </div>
-                <button id="btn-remove-file" class="text-slate-300 hover:text-red-400 transition-colors">
-                  <span class="material-symbols-outlined text-lg">close</span>
-                </button>
-              </div>
-            </div>
-
-            <!-- Settings -->
-            <div class="space-y-4 text-left">
-              <div class="flex flex-col gap-2">
-                <label class="text-xs font-label uppercase tracking-widest text-slate-400 font-bold">Thời gian hết hạn</label>
-                <div class="relative">
-                  <select id="input-expire" class="w-full bg-white border border-slate-200 rounded-lg px-4 py-3 text-sm appearance-none focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-body cursor-pointer text-slate-700">
-                    <option value="1">1 ngày</option>
-                    <option value="3" selected>3 ngày</option>
-                    <option value="7">7 ngày</option>
-                    <option value="30">30 ngày</option>
-                    <option value="0">Vĩnh viễn (0)</option>
-                  </select>
-                  <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">expand_more</span>
-                </div>
-              </div>
-
-              <!-- Toggle -->
-              <div class="flex items-center justify-between py-4 border-t border-slate-50">
-                <div class="flex flex-col">
-                  <span class="text-sm font-semibold text-slate-700">Xoá sau tải</span>
-                  <span class="text-xs text-slate-500">Người nhận duy nhất</span>
-                </div>
-                <label class="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" id="input-burn" class="sr-only peer">
-                  <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-secondary"></div>
-                </label>
-              </div>
-            </div>
-
-            <!-- Nút Upload Now -->
-            <button id="btn-upload" class="w-full mt-4 py-4 bg-gradient-to-r from-secondary to-[#00D4FF] text-white font-headline font-black uppercase tracking-[0.1em] rounded-lg shadow-lg shadow-secondary/20 hover:scale-[1.02] active:scale-95 transition-all duration-200 flex items-center justify-center gap-3">
-              Mã hoá & Đẩy File
-              <span class="material-symbols-outlined text-xl">bolt</span>
-            </button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-
-    <!-- ============================================== -->
-    <!-- MODAL 1: SUCCESS UPLOAD -->
-    <!-- ============================================== -->
-    <div id="success-modal" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md hidden opacity-0 transition-opacity duration-300">
-      <div class="glass-card max-w-lg w-full p-6 sm:p-8 rounded-3xl border border-white shadow-2xl flex flex-col items-center text-center transform scale-95 transition-transform duration-300" id="success-modal-box">
-        <div class="w-20 h-20 rounded-full bg-emerald-50 flex items-center justify-center mb-4 ring-8 ring-emerald-500/5">
-          <span class="material-symbols-outlined text-5xl text-emerald-500">check_circle</span>
-        </div>
-        <h2 class="font-headline text-2xl font-black mb-1 text-slate-800">Upload Thành Công</h2>
-        <p class="text-slate-500 text-sm mb-6 font-medium">Link tải và Mã quản lý đã được tạo. Lưu ý: Không hiển thị lại Mã quản lý!</p>
-        
-        <!-- Result URL -->
-        <div class="w-full text-left mb-2 text-xs font-semibold text-slate-500 uppercase">Share Link Public</div>
-        <div class="w-full flex items-center bg-slate-50 rounded-xl overflow-hidden border border-slate-200 focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/10 transition-all mb-4">
-          <input id="result-url" class="bg-transparent border-none focus:ring-0 text-secondary font-bold text-xs sm:text-sm pl-4 pr-2 py-3 flex-grow font-mono min-w-0" readonly type="text" />
-          <button id="btn-copy-url" class="bg-white hover:bg-slate-100 text-secondary px-3 sm:px-4 py-3 text-[10px] sm:text-xs font-black uppercase transition-colors border-l border-slate-200 flex items-center gap-1 sm:gap-2 whitespace-nowrap">
-            <span class="material-symbols-outlined text-sm">content_copy</span> <span class="hidden sm:inline">Ghi chép</span>
-          </button>
-        </div>
-
-        <!-- Result M-Key -->
-        <div class="w-full text-left mb-2 text-xs font-semibold text-rose-500 uppercase">Master Key (Cầm Chìa Này Để Xóa File)</div>
-        <div class="w-full flex items-center bg-rose-50 rounded-xl overflow-hidden border border-rose-200 focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/10 transition-all mb-6">
-          <input id="result-key" class="bg-transparent border-none focus:ring-0 text-rose-600 font-bold text-xs sm:text-sm pl-4 pr-2 py-3 flex-grow font-mono min-w-0" readonly type="password" />
-          <button id="btn-copy-key" class="bg-white hover:bg-rose-100 text-rose-600 px-3 sm:px-4 py-3 text-[10px] sm:text-xs font-black uppercase transition-colors border-l border-rose-200 flex items-center gap-1 sm:gap-2 whitespace-nowrap">
-            <span class="material-symbols-outlined text-sm">key</span> <span class="hidden sm:inline">Copy Mã</span>
-          </button>
-        </div>
-
-        <div class="flex flex-col sm:flex-row gap-4 w-full">
-          <button class="w-full sm:flex-1 py-3 bg-slate-100 hover:bg-slate-200 rounded-xl text-sm font-bold text-slate-600 transition-colors" onclick="window.location.reload()">Trang chủ</button>
-          <button id="btn-new-upload" class="w-full sm:flex-1 py-3 bg-secondary text-white rounded-xl text-sm font-black uppercase tracking-widest hover:shadow-xl hover:shadow-secondary/30 hover:scale-105 active:scale-95 transition-all">Upload Khác</button>
-        </div>
-      </div>
-    </div>
-
-
-    <!-- ============================================== -->
-    <!-- SECTION 2: VIEW/DOWNLOAD PAGE -->
-    <!-- ============================================== -->
-    <section id="view-download" class="view hidden w-full">
-      <div class="w-full max-w-6xl grid grid-cols-1 gap-24 mx-auto align-center">
-        
-        <!-- Loading State -->
-        <div id="dl-state-loading" class="flex flex-col items-center justify-center py-12">
-            <span class="material-symbols-outlined text-primary text-6xl animate-spin">sync</span>
-            <p class="mt-4 font-headline text-lg text-slate-400">Bẻ khoá liên kết...</p>
-        </div>
-
-        <!-- Ready State -->
-        <div id="dl-state-ready" class="flex-col items-center justify-center py-12 hidden">
-          <div class="w-full max-w-lg glass-card p-6 sm:p-8 rounded-lg shadow-[0_10px_40px_-10px_rgba(0,0,0,0.05)] relative overflow-hidden group border border-white/60 mx-auto bg-white">
-            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-40 group-hover:animate-pulse"></div>
-            
-            <div class="flex flex-col items-center gap-6">
-              <!-- File Icon / Media Preview -->
-              <div id="dl-icon-container" class="w-24 h-24 bg-slate-50 rounded-xl flex items-center justify-center border border-white shadow-inner relative">
-                <div class="absolute inset-0 bg-[#00D4FF]/10 blur-xl"></div>
-                <span class="material-symbols-outlined text-6xl text-[#00D4FF] big-icon" style="font-variation-settings: 'FILL' 1;">description</span>
-              </div>
-              <div id="dl-preview-container" class="hidden w-full overflow-hidden rounded-xl border border-slate-100 shadow-sm max-h-48 text-center bg-black/5"></div>
-
-              <div class="text-center space-y-2">
-                <h1 id="dl-filename" class="text-2xl font-headline font-bold text-slate-900 tracking-tight text-truncate px-4">Filename...</h1>
-                <div class="flex items-center justify-center gap-4">
-                  <span id="dl-filesize" class="bg-slate-100 px-3 py-1 rounded text-xs font-label uppercase tracking-widest text-slate-500">-- MB</span>
-                  <span class="bg-primary/10 px-3 py-1 rounded text-xs font-label uppercase tracking-widest text-primary font-semibold">SECURE</span>
-                </div>
-              </div>
-
-              <div class="w-full bg-rose-50 p-4 rounded-lg border border-red-100 shadow-sm text-center">
-                <p class="text-[10px] font-label uppercase tracking-[0.1em] text-red-500 mb-1">Cảnh báo hệ thống</p>
-                <p id="dl-expiry-text" class="text-xs font-medium text-red-600">File này có thể cháy tự động ngay sau khi bạn xem, hoặc sau khi mãn hạn lưu giữ Server.</p>
-              </div>
-
-              <div class="flex flex-col sm:flex-row gap-4 w-full mt-2" id="download-action-group">
-                <button id="btn-view" class="w-full sm:flex-1 py-4 bg-white text-[#6a1cf6] border border-[#6a1cf6] font-headline font-bold text-sm lg:text-lg rounded-lg transition-all duration-200 hover:bg-slate-50 flex items-center justify-center gap-2">
-                  <span class="material-symbols-outlined">visibility</span> Xem trực tiếp
-                </button>
-                <a id="btn-download" href="#" target="_blank" class="w-full sm:flex-1 py-4 bg-gradient-to-r from-[#6a1cf6] to-[#00D4FF] text-white font-headline font-bold text-sm lg:text-lg rounded-lg neon-glow transition-all duration-200 hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2">
-                  <span class="material-symbols-outlined">download</span> Download
-                </a>
-              </div>
-              <p class="text-[10px] font-label uppercase tracking-[0.1em] text-slate-400">Tải xuống an toàn qua TLS</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Error State -->
-        <div id="dl-state-error" class="flex-col items-center justify-center py-12 hidden">
-          <div class="w-full max-w-4xl glass-card overflow-hidden rounded-xl shadow-lg border-white/60 mx-auto grid grid-cols-1 md:grid-cols-2 bg-white">
-            <div class="bg-slate-50 p-12 flex items-center justify-center border-r border-slate-100">
-              <div class="relative w-full aspect-square max-w-[200px]">
-                <div class="absolute inset-0 bg-rose-500/10 rounded-full blur-3xl"></div>
-                <span class="material-symbols-outlined text-[100px] text-rose-300 w-full text-center" style="font-variation-settings: 'FILL' 0; font-weight: 300;">link_off</span>
-              </div>
-            </div>
-            <div class="p-12 flex flex-col justify-center space-y-6">
-              <span class="text-xs font-label uppercase tracking-[0.3em] text-rose-500 font-bold">ERROR</span>
-              <h2 class="text-4xl font-headline font-bold text-slate-900 tracking-tighter leading-none">Liên kết gãy / Hết hạn</h2>
-              <p id="dl-error-message" class="text-slate-500 text-sm">Tệp không tồn tại do sai đường dẫn, hoặc đã chủ động bị gỡ bởi người tạo.</p>
-              
-              <button onclick="window.location.href='/'" class="w-fit px-8 py-3 bg-[#6a1cf6] text-white font-headline font-bold uppercase tracking-widest text-xs hover:bg-[#5213c4] transition-colors shadow-lg shadow-purple-200 rounded">
-                Share Lại Tệp Khác
-              </button>
-            </div>
-          </div>
-        </div>
-
-      </div>
-    </section>
-
-    <!-- ============================================== -->
-    <!-- SECTION 3: MANAGE PAGE -->
-    <!-- ============================================== -->
-    <section id="view-manage" class="view hidden w-full">
-      <div class="w-full max-w-2xl mx-auto flex flex-col gap-6">
-        <div class="glass-card p-6 sm:p-10 rounded-2xl border border-white text-center shadow-sm">
-          <div class="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center border border-slate-200 mx-auto mb-6">
-            <span class="material-symbols-outlined text-4xl text-slate-500">vpn_key</span>
-          </div>
-          <h2 class="font-headline text-3xl font-black mb-2 text-slate-800">Quản lý Tài Khoản Ẩn Danh</h2>
-          <p class="text-slate-500 text-sm font-medium mx-auto max-w-md">Nhập Master Key của bạn để lấy quyền sinh sát trực tiếp với File Cloudflare R2 đã Upload.</p>
-          
-          <div class="flex flex-col sm:flex-row gap-3 mt-8">
-            <div class="relative flex-1">
-              <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">code</span>
-              <input type="text" id="input-manage-key" class="w-full pl-12 pr-4 py-4 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-primary/20 outline-none font-mono text-sm text-slate-700 transition-all placeholder:text-slate-400 placeholder:font-sans" placeholder="Ex: dfa9b2-...">
-            </div>
-            <button id="btn-manage-search" class="bg-gradient-to-r from-slate-800 to-slate-900 text-white px-8 py-4 rounded-xl font-bold font-headline uppercase tracking-wide hover:shadow-lg transition-transform active:scale-95 flex items-center gap-2 justify-center">
-              Tra Cứu <span class="material-symbols-outlined text-sm">search</span>
-            </button>
-          </div>
-        </div>
-
-        <div id="manage-result" class="glass-card p-6 sm:p-8 rounded-2xl border border-white shadow-sm flex flex-col gap-4 hidden bg-white">
-            <!-- JS inserts File DOM inside here -->
-        </div>
-      </div>
-    </section>
-
-  </main>
-
-  <!-- Footer Component -->
-  <footer class="w-full py-10 mt-auto bg-[#eef1f3] border-t border-slate-200">
-    <div class="flex flex-col md:flex-row justify-between items-center gap-4 px-6 md:px-12 max-w-screen-2xl mx-auto">
-      <div class="flex flex-col gap-1 items-center md:items-start text-center md:text-left">
-        <span class="font-headline font-bold text-slate-900 text-lg tracking-tight">File2Url | Open Cloud</span>
-        <span class="font-body text-[10px] uppercase tracking-widest text-slate-500"></span>
-      </div>
-      <div class="flex flex-wrap justify-center gap-6 font-body text-[10px] font-semibold uppercase tracking-widest text-slate-500">
-        <a class="hover:text-[#00D4FF] transition-all" href="#">Developer Docs</a>
-        <a class="hover:text-[#6a1cf6] transition-all" href="https://github.com/vietngia249/File2Url">GitHub</a>
-      </div>
-    </div>
-  </footer>
-
-  <script type="module" src="/src/main.js"></script>
-</body>
+  </body>
 </html>

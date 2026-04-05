@@ -1,8 +1,10 @@
 // ---------------------------------------------------------------------------
 // auth.js — User Authentication & Google OAuth Connecting Routes
 // ---------------------------------------------------------------------------
-import bcrypt from 'bcrypt'; // Needs npm install bcrypt
-import jwt from 'jsonwebtoken'; // Needs npm install jsonwebtoken
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
+import { google } from 'googleapis';
 import { query } from '../services/db.js';
 import { oauth2Client } from '../services/storage/gdrive_auth.js';
 
@@ -61,18 +63,25 @@ export default async function authRoutes(fastify) {
     }
   });
 
-  // 3. Request URL đăng nhập Google OAuth để cấp quyền Google Drive
+  // 3. Request URL đăng nhập Google OAuth để cấp quyền Google Drive & SSO
   fastify.get('/auth/google/url', async (request, reply) => {
     const scopes = [
-      'https://www.googleapis.com/auth/drive.file', // Chỉ lấy quyền ném file vào Drive do App này tạo
+      'https://www.googleapis.com/auth/userinfo.email',
+      'https://www.googleapis.com/auth/userinfo.profile',
+      'https://www.googleapis.com/auth/drive.file'
     ];
+
+    const returnTo = request.query.returnTo || 'https://file2url-nsdd.onrender.com';
+    const jwtToken = request.headers.authorization ? request.headers.authorization.split(' ')[1] : '';
+
+    const stateObj = { jwt: jwtToken, returnTo };
+    const stateStr = Buffer.from(JSON.stringify(stateObj)).toString('base64');
 
     const url = oauth2Client.generateAuthUrl({
       access_type: 'offline', // BẮT BUỘC để lấy Refresh Token
-      prompt: 'consent',      // Bắt buộc để Google chịu nhả Refresh Token cho lần cấp quyền lại
+      prompt: 'consent',      // Bắt buộc để Google chịu nhả Refresh Token
       scope: scopes,
-      // Gắn state an toàn chống CSRF (Ví dụ jwt token của user)
-      state: request.headers.authorization ? request.headers.authorization.split(' ')[1] : ''
+      state: stateStr
     });
 
     return reply.send({ url });
@@ -80,28 +89,58 @@ export default async function authRoutes(fastify) {
 
   // 4. Callback hứng code từ Google trả về
   fastify.get('/auth/google/callback', async (request, reply) => {
-    const { code, state: jwtToken } = request.query;
+    const { code, state } = request.query;
 
-    if (!code || !jwtToken) {
-      return reply.code(400).send({ error: "Thiếu code hoặc User Session Auth" });
+    if (!code || !state) {
+      return reply.code(400).send({ error: "Thiếu code hoặc state" });
     }
 
     try {
-      let decoded;
-      try {
-        decoded = jwt.verify(jwtToken, JWT_SECRET);
-      } catch (err) {
-         return reply.code(401).send({ error: "Token chứng thực không hợp lệ." });
-      }
-
-      const userId = decoded.id;
+      const stateObj = JSON.parse(Buffer.from(state, 'base64').toString('utf8'));
+      const jwtToken = stateObj.jwt;
+      const returnTo = stateObj.returnTo;
 
       // Đổi auth code sang Access và Refresh Tokens
       const { tokens } = await oauth2Client.getToken(code);
-      
+      oauth2Client.setCredentials(tokens);
+
+      // Fetch User Info từ Google
+      const oauth2 = google.oauth2({ version: 'v2', auth: oauth2Client });
+      const userInfo = await oauth2.userinfo.get();
+      const googleEmail = userInfo.data.email;
+
+      let userId = null;
+
+      // Kịch bản 1: User đã đăng nhập sẵn trên web (Có truyền jwt)
+      if (jwtToken) {
+        try {
+          const decoded = jwt.verify(jwtToken, JWT_SECRET);
+          userId = decoded.id;
+        } catch (err) {
+           request.log.warn("Provided JWT in state was invalid, falling back to Google Email matching.");
+        }
+      }
+
+      // Kịch bản 2: User chưa đăng nhập -> Tìm trong DB theo Google Email
+      if (!userId) {
+        const result = await query(`SELECT id FROM users WHERE email = $1`, [googleEmail]);
+        if (result.rows.length > 0) {
+          userId = result.rows[0].id;
+        } else {
+          // Kịch bản 3: Email lạ -> Tạo account mới tự động (SSO Register)
+          const randomPass = crypto.randomBytes(16).toString('hex');
+          const hash = await bcrypt.hash(randomPass, 10);
+          const insertResult = await query(
+            `INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING id`,
+            [googleEmail, hash]
+          );
+          userId = insertResult.rows[0].id;
+        }
+      }
+
       const newExpiryDate = tokens.expiry_date ? new Date(tokens.expiry_date) : null;
 
-      // Lưu trữ/Cập nhật vào Database (Bảng user_storage_configs)
+      // Lưu trữ/Cập nhật Config Storage Drive
       await query(
         `INSERT INTO user_storage_configs (user_id, provider, access_token, refresh_token, token_expires_at)
          VALUES ($1, 'google_drive', $2, $3, $4)
@@ -113,7 +152,12 @@ export default async function authRoutes(fastify) {
         [userId, tokens.access_token, tokens.refresh_token, newExpiryDate]
       );
 
-      return reply.send({ success: true, message: "Drive Integration Successful!" });
+      // Generate lại JWT Token quyền lực mới
+      const finalToken = jwt.sign({ id: userId }, JWT_SECRET, { expiresIn: '7d' });
+
+      // Redirect quay về Frontend Web
+      return reply.redirect(`${returnTo}?token=${finalToken}`);
+      
     } catch (err) {
       request.log.error({ err }, '[Auth] Google OAuth Callback Error');
       return reply.code(500).send({ error: "Google Integration Failed." });
