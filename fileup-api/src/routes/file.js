@@ -12,8 +12,8 @@
 //           prevent unnecessary DB load and potential injection vectors.
 //   [FIX-9] Replaced console.log with request.log (Fastify structured logger).
 // ---------------------------------------------------------------------------
-import { query } from '../services/db.js';
-import { getFileStream } from '../services/storage.js';
+import { query, pool } from '../services/db.js';
+import { StorageService } from '../services/storage/index.js';
 import { pipeline } from 'node:stream/promises';
 
 // [FIX-4] UUID v4 regex — validate :id param before touching the database
@@ -67,45 +67,69 @@ export default async function fileRoute(fastify) {
     }
 
     // -------------------------------------------------------
-    // Lookup file metadata from DB (parameterized query retained)
+    // Lookup file metadata from DB with Atomic Lock (FOR UPDATE)
     // -------------------------------------------------------
     let file;
+    const client = await pool.connect();
+    
     try {
-      const result = await query(
-        `SELECT id, storage_key, original_filename, content_type, size_bytes, expires_at
+      await client.query('BEGIN');
+      const result = await client.query(
+        `SELECT id, storage_key, provider_file_id, storage_provider, user_id, 
+                original_filename, content_type, size_bytes, expires_at,
+                max_views, current_views
          FROM files
-         WHERE id = $1`,
+         WHERE id = $1 FOR UPDATE`,
         [id]
       );
       file = result.rows[0];
+
+      if (!file) {
+        await client.query('ROLLBACK');
+        client.release();
+        return reply.code(404).send({ error: 'File not found' });
+      }
+
+      // -------------------------------------------------------
+      // Dual-Kill Expiry Check
+      // -------------------------------------------------------
+      if (file.expires_at && new Date(file.expires_at) < new Date()) {
+        await client.query('ROLLBACK');
+        client.release();
+        return reply.code(403).send({
+          error: 'This link has expired',
+          expired_at: new Date(file.expires_at).toISOString(),
+        });
+      }
+
+      if (file.max_views !== null && file.current_views >= file.max_views) {
+        await client.query('ROLLBACK');
+        client.release();
+        return reply.code(403).send({ error: 'Maximum views reached for this file.' });
+      }
+
+      // Increment views
+      await client.query('UPDATE files SET current_views = current_views + 1 WHERE id = $1', [id]);
+      await client.query('COMMIT');
+      
     } catch (err) {
-      // [FIX-9] Structured logger
-      request.log.error({ err }, '[File] DB lookup failed');
+      await client.query('ROLLBACK');
+      client.release();
+      request.log.error({ err }, '[File] DB lookup/transaction failed');
       return reply.code(500).send({ error: 'Internal server error' });
-    }
-
-    if (!file) {
-      return reply.code(404).send({ error: 'File not found' });
-    }
-
-    // -------------------------------------------------------
-    // Expiry check
-    // -------------------------------------------------------
-    if (new Date(file.expires_at) < new Date()) {
-      return reply.code(403).send({
-        error: 'This link has expired',
-        expired_at: new Date(file.expires_at).toISOString(),
-      });
+    } finally {
+      // Must release back to pool unless released in catch
+      if (client) client.release();
     }
 
     // -------------------------------------------------------
-    // Fetch from R2 and stream to client
+    // Fetch from Provider (R2 or Google Drive) and stream to client
     // -------------------------------------------------------
     let fileStream;
     try {
-      fileStream = await getFileStream(file.storage_key);
+      fileStream = await StorageService.getStream(file, request.log);
     } catch (err) {
-      request.log.error({ err }, '[File] R2 fetch failed');
+      request.log.error({ err }, '[File] Storage provider fetch failed');
       return reply.code(500).send({ error: 'Failed to retrieve file' });
     }
 

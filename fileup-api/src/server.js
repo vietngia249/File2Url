@@ -21,7 +21,9 @@ import cors from '@fastify/cors';
 import uploadRoute from './routes/upload.js';
 import fileRoute from './routes/file.js';
 import manageRoute from './routes/manage.js';
+import authRoutes from './routes/auth.js';
 import { startCleanupJob } from './jobs/cleanup.js';
+import { startTokenRefreshJob } from './jobs/token_refresh.js';
 import { pool } from './services/db.js';
 
 // ---------------------------------------------------------------------------
@@ -60,7 +62,7 @@ const fastify = Fastify({
 // [FIX-8] CORS — explicit allowed origin only, no wildcard
 await fastify.register(cors, {
   origin: ALLOWED_ORIGIN,
-  methods: ['GET', 'POST', 'OPTIONS', 'DELETE'],
+  methods: ['GET', 'POST', 'OPTIONS', 'DELETE', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   // Credentials support if your frontend needs cookies/auth headers
   credentials: false,
@@ -102,6 +104,7 @@ await fastify.register(multipart, {
 await fastify.register(uploadRoute);
 await fastify.register(fileRoute);
 await fastify.register(manageRoute);
+await fastify.register(authRoutes);
 
 // Health check — useful for load balancers / uptime monitors
 fastify.get('/health', async () => ({
@@ -133,6 +136,8 @@ try {
 
   // Start background cleanup job after server is up
   startCleanupJob(fastify.log);
+  // Start background token refresh job for Google Drive uploads
+  startTokenRefreshJob(fastify.log);
 } catch (err) {
   fastify.log.error(err);
   process.exit(1);

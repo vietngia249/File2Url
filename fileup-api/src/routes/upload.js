@@ -7,7 +7,10 @@
 // ---------------------------------------------------------------------------
 import { v4 as uuidv4 } from 'uuid';
 import { query } from '../services/db.js';
-import { uploadFile } from '../services/storage.js';
+import { StorageService } from '../services/storage/index.js';
+import jwt from 'jsonwebtoken';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-v2-key-change-in-prod';
 
 const MAX_FILE_SIZE_BYTES = 100 * 1024 * 1024; // 100 MB
 const MAX_FILENAME_BYTES = 255;
@@ -29,6 +32,19 @@ export default async function uploadRoute(fastify) {
   fastify.post('/upload', {
     config: { rateLimit: { max: 10, timeWindow: '1 minute' } },
   }, async (request, reply) => {
+    
+    // 1. Detect User Auth
+    let userId = null;
+    if (request.headers.authorization) {
+      try {
+        const token = request.headers.authorization.split(' ')[1];
+        const decoded = jwt.verify(token, JWT_SECRET);
+        userId = decoded.id;
+      } catch (err) {
+        return reply.code(401).send({ error: "Invalid auth token" });
+      }
+    }
+
     let parts;
     try {
       parts = request.parts({ limits: { fileSize: MAX_FILE_SIZE_BYTES } });
@@ -38,11 +54,11 @@ export default async function uploadRoute(fastify) {
 
     const fileId = uuidv4();
     const managementKey = uuidv4(); 
-    const storageKey = `files/${fileId}`;
+    const storageKey = `files/${fileId}`; // Default for R2
 
     let fileMeta = null;     
-    let expireDays = 1;      
-    let deleteAfterExpiry = false;
+    let exactExpiresAt = null;      
+    let maxViews = null;
     let sizeBytes = 0;
     
     let uploadPromise = null;
@@ -74,19 +90,31 @@ export default async function uploadRoute(fastify) {
         // Pipe to our transform
         part.file.pipe(countingStream);
         
-        // --- STREAM DEADLOCK FIX ---
-        // Instead of waiting for the for-await loop to finish, we MUST
-        // start draining the stream immediately. Otherwise `part` stalls.
-        uploadPromise = uploadFile(storageKey, countingStream, fileMeta.mimetype, 0, request.log);
+        const provider = userId ? 'gdrive' : 'r2';
+        
+        uploadPromise = StorageService.upload({
+           stream: countingStream,
+           provider,
+           user_id: userId,
+           metadata: {
+             filename: fileMeta.filename,
+             mimeType: fileMeta.mimetype,
+             storageKey
+           },
+           logger: request.log
+        });
 
       } else if (part.type === 'field') {
-        if (part.fieldname === 'expire') {
-          const parsedDays = parseInt(part.value, 10);
-          if (!isNaN(parsedDays)) {
-            expireDays = parsedDays;
-          }
-        } else if (part.fieldname === 'delete_after_expiry') {
-          deleteAfterExpiry = part.value === 'true' || part.value === '1';
+        if (part.fieldname === 'exact_expires_at') {
+           const parsedDate = new Date(part.value);
+           if (!isNaN(parsedDate.getTime())) {
+             exactExpiresAt = parsedDate;
+           }
+        } else if (part.fieldname === 'max_views') {
+           const pViews = parseInt(part.value, 10);
+           if (!isNaN(pViews) && pViews > 0) {
+             maxViews = pViews;
+           }
         }
       }
     }
@@ -97,41 +125,46 @@ export default async function uploadRoute(fastify) {
     if (!uploadPromise || !fileMeta) {
       return reply.code(400).send({ error: 'Missing required field: file' });
     }
-    if (expireDays < 0) {
-      return reply.code(400).send({ error: `Invalid expire value. Must be 0 or a positive number.` });
-    }
-
-    const expiresAt = expireDays > 0 
-        ? new Date(Date.now() + expireDays * 24 * 60 * 60 * 1000) 
-        : null;
 
     // -------------------------------------------------------
-    // Await background R2 Upload
+    // Await background R2/GDrive Upload
     // -------------------------------------------------------
+    let providerFileId = storageKey;
     try {
-      await uploadPromise;
+      const result = await uploadPromise;
+      if (result && result.provider_file_id) {
+         providerFileId = result.provider_file_id;
+      }
     } catch (err) {
       if (err.message === 'FILE_TOO_LARGE') {
         return reply.code(413).send({ error: 'File too large. Maximum size is 100MB.' });
       }
-      request.log.error({ err }, '[Upload] Upload to R2 failed');
+      request.log.error({ err }, '[Upload] Storage upload failed');
       return reply.code(500).send({ error: 'File upload failed. Please try again.' });
     }
 
     // -------------------------------------------------------
     // Persist metadata to PostgreSQL
     // -------------------------------------------------------
+    const storageProvider = userId ? 'gdrive' : 'r2';
+    const retentionUntil = (!userId) 
+       ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) 
+       : null; // R2 keeps 30 days. GDrive is persistent.
+
     try {
       await query(
-        `INSERT INTO files (id, storage_key, original_filename, content_type, size_bytes, expires_at, delete_after_expiry, management_key)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-        [ fileId, storageKey, fileMeta.filename, fileMeta.mimetype, sizeBytes, expiresAt, deleteAfterExpiry, managementKey ]
+        `INSERT INTO files 
+         (id, storage_provider, provider_file_id, storage_key, original_filename, content_type, size_bytes, expires_at, max_views, retention_until, user_id, management_key)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+        [ 
+          fileId, storageProvider, providerFileId, storageKey, 
+          fileMeta.filename, fileMeta.mimetype, sizeBytes, 
+          exactExpiresAt, maxViews, retentionUntil, userId, managementKey 
+        ]
       );
     } catch (err) {
       request.log.error({ err }, '[Upload] DB insert failed');
-      import('../services/storage.js')
-        .then(({ deleteFile }) => deleteFile(storageKey, request.log))
-        .catch(() => {});
+      StorageService.delete({ storage_provider: storageProvider, provider_file_id: providerFileId, storage_key: storageKey, user_id: userId }, request.log).catch(() => {});
       return reply.code(500).send({ error: 'Failed to save file metadata.' });
     }
 
@@ -139,8 +172,8 @@ export default async function uploadRoute(fastify) {
     const host = request.headers['x-forwarded-host'] || request.headers.host || `localhost:${process.env.PORT || 3000}`;
     return reply.code(201).send({
       url: `${proto}://${host}/file/${fileId}`,
-      expires_at: expiresAt ? expiresAt.toISOString() : null,
-      delete_after_expiry: deleteAfterExpiry,
+      expires_at: exactExpiresAt ? exactExpiresAt.toISOString() : null,
+      max_views: maxViews,
       management_key: managementKey
     });
   });

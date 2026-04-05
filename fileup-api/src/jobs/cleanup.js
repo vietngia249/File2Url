@@ -12,7 +12,7 @@
 //           (log object injected via startCleanupJob parameter).
 // ---------------------------------------------------------------------------
 import { query } from '../services/db.js';
-import { deleteFile } from '../services/storage.js';
+import { StorageService } from '../services/storage/index.js';
 
 const CLEANUP_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 
@@ -26,77 +26,44 @@ const HARD_TTL_DAYS = 30;
 
 /**
  * Single cleanup run:
- *   Phase 1 — Delete files where delete_after_expiry = true (existing behavior)
- *   Phase 2 — [FIX-6] Delete ALL files expired > HARD_TTL_DAYS ago (new)
- *
- * Fault-tolerant: logs errors per-record, does not abort the loop.
+ * Deletes EXPIRED files from R2 based strictly on retention_until mapping
+ * GDrive files are ignored (persistent storage)
  *
  * @param {object} log - Fastify structured logger (fastify.log)
  */
 async function runCleanup(log) {
-  log.info('[Cleanup] Starting cleanup run');
+  log.info('[Cleanup] Starting cleanup run V2');
 
-  // -------------------------------------------------------------------------
-  // Phase 1: delete_after_expiry = true (immediate deletion on expiry)
-  // -------------------------------------------------------------------------
-  let softRows = [];
+  let rows = [];
   try {
     const result = await query(
-      `SELECT id, storage_key
+      `SELECT id, storage_key, provider_file_id, storage_provider, user_id
        FROM files
-       WHERE expires_at < now()
-         AND delete_after_expiry = true
+       WHERE storage_provider = 'r2' 
+         AND retention_until < now()
        LIMIT $1`,
       [BATCH_SIZE]
     );
-    softRows = result.rows;
+    rows = result.rows;
   } catch (err) {
-    log.error({ err }, '[Cleanup] Phase 1 — Failed to query soft-delete files');
+    log.error({ err }, '[Cleanup] Failed to query files for cleanup');
   }
 
-  const softResult = await deleteRows(softRows, log, 'Phase 1 (soft-delete)');
-
-  // -------------------------------------------------------------------------
-  // [FIX-6] Phase 2: Hard TTL — delete anything expired over HARD_TTL_DAYS
-  // regardless of the delete_after_expiry flag.
-  //
-  // This prevents:
-  //   - Zombie DB records for files users "chose to keep" but never accessed
-  //   - Unbounded R2 storage growth
-  //   - Stale metadata in PostgreSQL accumulating forever
-  // -------------------------------------------------------------------------
-  let hardRows = [];
-  try {
-    const result = await query(
-      `SELECT id, storage_key
-       FROM files
-       WHERE expires_at < now() - INTERVAL '${HARD_TTL_DAYS} days'
-       LIMIT $1`,
-      [BATCH_SIZE]
-    );
-    hardRows = result.rows;
-  } catch (err) {
-    log.error({ err }, '[Cleanup] Phase 2 — Failed to query hard-TTL files');
-  }
-
-  const hardResult = await deleteRows(hardRows, log, `Phase 2 (hard-TTL >${HARD_TTL_DAYS}d)`);
+  const result = await deleteRows(rows, log, 'V2 R2 Cleanup');
 
   log.info(
     {
-      softDeleted: softResult.deleted,
-      softFailed: softResult.failed,
-      hardDeleted: hardResult.deleted,
-      hardFailed: hardResult.failed,
+      deleted: result.deleted,
+      failed: result.failed
     },
     '[Cleanup] Run complete'
   );
 }
 
 /**
- * Delete a set of rows from R2 and DB.
- * Fault-tolerant: continues on per-row errors.
+ * Delete a set of rows from Storage and DB.
  *
- * @param {Array<{id: string, storage_key: string}>} rows
+ * @param {Array<object>} rows
  * @param {object} log - Fastify logger
  * @param {string} phase - label for log messages
  * @returns {{ deleted: number, failed: number }}
@@ -114,16 +81,15 @@ async function deleteRows(rows, log, phase) {
 
   for (const row of rows) {
     try {
-      // 1. Delete object from R2 (idempotent — safe if already gone)
-      await deleteFile(row.storage_key, log);
+      // 1. Delete object from R2 via StorageService
+      await StorageService.delete(row, log);
 
       // 2. Remove record from PostgreSQL
       await query('DELETE FROM files WHERE id = $1', [row.id]);
 
       deleted++;
-      log.info({ fileId: row.id, key: row.storage_key }, `[Cleanup] ${phase} — Deleted`);
+      log.info({ fileId: row.id }, `[Cleanup] ${phase} — Deleted`);
     } catch (err) {
-      // Log and continue — do NOT let one failure abort others
       failed++;
       log.error({ err, fileId: row.id }, `[Cleanup] ${phase} — Failed to delete`);
     }
@@ -155,7 +121,7 @@ export function startCleanupJob(log) {
 
   // [FIX-9] Structured log
   log.info(
-    { intervalMs: CLEANUP_INTERVAL_MS, hardTtlDays: HARD_TTL_DAYS },
+    { intervalMs: CLEANUP_INTERVAL_MS },
     '[Cleanup] Job scheduled'
   );
 }

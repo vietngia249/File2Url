@@ -130,7 +130,5 @@ dist
 *.sw?
 
 # Agent files
-agent.md
-security_assessment_report.md
-frontend_requirements.md
+agent/
 stitch/
