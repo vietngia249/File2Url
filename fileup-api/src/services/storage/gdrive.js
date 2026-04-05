@@ -7,6 +7,53 @@ import fetch from 'node-fetch'; // Requires node-fetch (or use native fetch in N
 const CHUNK_SIZE = 5 * 1024 * 1024; // 5 MB (must be multiple of 256KB)
 
 /**
+ * Gets or creates the 'File2Url' folder in the user's Google Drive.
+ * @param {string} accessToken
+ * @param {Object} logger
+ * @returns {Promise<string>} Folder ID
+ */
+async function getOrCreateFolder(accessToken, logger) {
+  // 1. Check if folder exists
+  const query = encodeURIComponent("name='File2Url' and mimeType='application/vnd.google-apps.folder' and trashed=false");
+  const searchUrl = `https://www.googleapis.com/drive/v3/files?q=${query}&spaces=drive&fields=files(id,name)`;
+  
+  const searchRes = await fetch(searchUrl, {
+    headers: { 'Authorization': `Bearer ${accessToken}` }
+  });
+  
+  if (searchRes.ok) {
+    const data = await searchRes.json();
+    if (data.files && data.files.length > 0) {
+      if (logger) logger.info({ folderId: data.files[0].id }, '[GDrive] Found existing File2Url folder');
+      return data.files[0].id;
+    }
+  }
+
+  // 2. Create folder if not exists
+  if (logger) logger.info('[GDrive] Creating new File2Url folder');
+  const createUrl = 'https://www.googleapis.com/drive/v3/files';
+  const createRes = await fetch(createUrl, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      name: 'File2Url',
+      mimeType: 'application/vnd.google-apps.folder'
+    })
+  });
+
+  if (!createRes.ok) {
+    const errText = await createRes.text();
+    throw new Error(`Failed to create File2Url folder: ${createRes.status} - ${errText}`);
+  }
+
+  const newFolder = await createRes.json();
+  return newFolder.id;
+}
+
+/**
  * Creates a resumable upload session on Google Drive.
  * @param {string} accessToken - OAuth2 Access Token
  * @param {Object} metadata - File metadata (name, mimeType, parents)
@@ -25,6 +72,7 @@ export async function createResumableSession(accessToken, metadata) {
     body: JSON.stringify({
       name: metadata.filename,
       mimeType: metadata.mimeType || 'application/octet-stream',
+      ...(metadata.parents ? { parents: metadata.parents } : {})
     })
   });
 
@@ -139,7 +187,16 @@ async function resumeUpload(sessionUrl) {
  * @param {Object} logger Logger instance
  */
 export async function uploadStreamToGDrive(stream, metadata, tokens, logger = console) {
-  // 1. Create the session
+  // 1. Get or create File2Url folder
+  let folderId = null;
+  try {
+    folderId = await getOrCreateFolder(tokens.access_token, logger);
+    metadata.parents = [folderId];
+  } catch (e) {
+    logger.warn({ err: e }, '[GDrive] Failed to structure into File2Url folder. Falling back to root directory.');
+  }
+
+  // 2. Create the session
   const sessionUrl = await createResumableSession(tokens.access_token, metadata);
   logger.info('[GDrive] Resumable session created successfully.');
 
